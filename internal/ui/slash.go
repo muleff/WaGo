@@ -619,9 +619,11 @@ func (h slashHost) SetGhost(on bool) { h.u.setGhost(on) }
 func (h slashHost) SnippetVars(chat string, reply *model.Message) map[string]string {
 	return h.u.snippetVars(chat, reply)
 }
-func (h slashHost) SnippetsChanged()            { h.u.snippetsChanged() }
-func (h slashHost) EditSnippet(id int64)        { h.u.openSnippetSettings(id) }
-func (h slashHost) ShowPayload(chat, id string) { h.u.openPayload(chat, id) }
+func (h slashHost) SnippetsChanged()     { h.u.snippetsChanged() }
+func (h slashHost) EditSnippet(id int64) { h.u.openSnippetSettings(id) }
+func (h slashHost) ShowPayload(chat, id string, additionalNodes bool) {
+	h.u.openPayload(chat, id, additionalNodes)
+}
 
 // slashTakesMentions reports whether the composer may offer @mentions:
 // unless its text is a command, or while the caret is in a command's

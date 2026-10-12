@@ -139,9 +139,10 @@ type UI struct {
 	// the backend has looked it up, and cardPhoneName their name.
 	cardPhone, cardPhoneName string
 
-	files  fileState   // documents and audio on disk
-	voice  voiceState  // the audio message playing
-	attach attachState // files picked to send
+	files       fileState        // documents and audio on disk
+	voice       voiceState       // the audio message playing
+	voiceRecord voiceRecordState // microphone recording and send lifecycle
+	attach      attachState      // files picked to send
 
 	menu       menuState
 	filterMenu filterMenuState
@@ -498,6 +499,9 @@ func (u *UI) ShowContact(id string, first, offset int) {
 
 func (u *UI) setPage(pg page) {
 	u.stopOutgoingTyping()
+	if pg != pageChats {
+		u.discardVoiceRecord()
+	}
 	if u.page == pg && (pg != pageStatus || u.status.groupID == "") {
 		return
 	}
@@ -596,6 +600,7 @@ func (u *UI) open(c *model.Chat) {
 	if u.selected != nil && u.selected.ID == c.ID && u.selPage == u.page {
 		return
 	}
+	u.discardVoiceRecord()
 	u.stashDraft()
 	u.selPage = u.page
 	if u.info.from != c.ID {
@@ -700,6 +705,7 @@ func (u *UI) layoutWindow(gtx C) D {
 	// While an account logs out for another to open, it keeps its
 	// chats on screen instead of flashing the login screen.
 	if !u.conn.State.LoggedIn() && !u.leaving() {
+		u.discardVoiceRecord()
 		u.updateLogin(gtx)
 		u.layoutLogin(gtx)
 		u.layoutLoginSwitch(gtx)
@@ -948,6 +954,7 @@ func (u *UI) layoutWithInfo(gtx C) D {
 
 // update handles input events before anything is drawn.
 func (u *UI) update(gtx C) {
+	u.updateVoiceRecord()
 	if u.mobile {
 		// Gio's Android activity finishes when Back is not consumed. Keep the
 		// window alive; Android's Home/app switcher still backgrounds it normally.
@@ -1086,8 +1093,20 @@ func (u *UI) update(gtx C) {
 			u.sendComposer()
 		}
 	}
+	if u.voiceRecord.discard.Clicked(gtx) {
+		u.discardVoiceRecord()
+	}
 	if u.conv.send.Clicked(gtx) {
-		u.sendComposer()
+		switch u.voiceRecord.phase {
+		case recordIdle:
+			if trimSpace(u.conv.composer.Text()) == "" && u.conv.edit.msg == nil && len(u.attach.files) == 0 {
+				u.beginVoiceRecord()
+			} else {
+				u.sendComposer()
+			}
+		case recordActive:
+			u.finishVoiceRecord()
+		}
 	}
 	if u.conv.outgoingTyping != "" && !u.canReportTyping() {
 		u.stopOutgoingTyping()
@@ -1116,6 +1135,8 @@ func (u *UI) ctrlEnterKeys(gtx C) {
 // escape closes the topmost overlay, like WhatsApp's Esc.
 func (u *UI) escape() {
 	switch {
+	case u.voiceRecord.phase != recordIdle:
+		u.discardVoiceRecord()
 	case u.acctMenu.open:
 		u.acctMenu.open, u.menu.open = false, false
 	case u.menu.open:

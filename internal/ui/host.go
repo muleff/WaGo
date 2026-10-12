@@ -504,6 +504,7 @@ func (h *host) enableDrop(hwnd uintptr) {
 func (h *host) closeWindow() {
 	h.idle.Stop()
 	h.away.Stop()
+	h.u.discardVoiceRecord()
 	h.u.stashDraft() // the open chat's composer, for the next window
 	h.u.shutdown()
 	h.win, h.u, h.events, h.ack, h.queue = nil, nil, nil, nil, nil
@@ -557,6 +558,7 @@ func (u *UI) openFromNotification(id string) {
 
 // shutdown stops what plays in a window that is going away.
 func (u *UI) shutdown() {
+	u.discardVoiceRecord()
 	u.stopVoice()
 	u.hideViewer()
 	u.status.viewer.close()

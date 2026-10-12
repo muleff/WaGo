@@ -89,6 +89,7 @@ func (u *UI) openMention(m *model.Message, mention string) {
 }
 
 func (u *UI) closeChat() {
+	u.discardVoiceRecord()
 	u.stashDraft()
 	if !isStatusDestination(u.attach.chatID) {
 		u.dropAttachments()
@@ -632,6 +633,9 @@ func (u *UI) layoutReplyPreview(gtx C, m *model.Message) D {
 // layoutComposer is the floating message box at the bottom of a chat, or
 // the select bar in select mode. Switching between them cross-fades.
 func (u *UI) layoutComposer(gtx C) D {
+	if u.voiceRecord.phase != recordIdle {
+		return u.layoutVoiceComposer(gtx)
+	}
 	if u.conv.selecting {
 		return fadeW(gtx, easeOut(u.conv.selV), u.layoutSelectBar)
 	}
@@ -641,6 +645,9 @@ func (u *UI) layoutComposer(gtx C) D {
 // layoutComposerBox is the message box, with the reply preview and the
 // mention picker above the input. Both grow in and shrink away.
 func (u *UI) layoutComposerBox(gtx C) D {
+	if u.voiceRecord.phase != recordIdle {
+		return u.layoutVoiceComposer(gtx)
+	}
 	p := u.pal
 	c := &u.conv
 	ms := u.mentionQuery()

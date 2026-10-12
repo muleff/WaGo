@@ -18,6 +18,7 @@ import (
 
 	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/polymorfa/hypermeow/appstate"
+	waBinary "github.com/polymorfa/hypermeow/binary"
 	"github.com/polymorfa/hypermeow/proto/waCompanionReg"
 	"github.com/polymorfa/hypermeow/proto/waHistorySync"
 	"github.com/polymorfa/hypermeow/proto/waSyncAction"
@@ -50,6 +51,7 @@ type Backend struct {
 
 	cliMu  sync.Mutex
 	cli    *whatsmeow.Client
+	catchNodes catchNodeBuffer
 	typing outgoingTyping
 
 	pairMu     sync.Mutex
@@ -215,6 +217,22 @@ func (b *Backend) useDevice(device *store.Device) {
 	// Pins, mutes and archives only arrive through app state; the initial
 	// full sync must emit them too.
 	cli.EmitAppStateEventsOnFullSync = true
+	previousRawNodeHandler := cli.RawNodeHandler
+	cli.RawNodeHandler = func(ctx context.Context, node *waBinary.Node) (*waBinary.Node, bool) {
+		var modified *waBinary.Node
+		var drop bool
+		if previousRawNodeHandler != nil {
+			modified, drop = previousRawNodeHandler(ctx, node)
+		}
+		if !drop {
+			if modified != nil {
+				b.onRawCatchNode(ctx, modified)
+			} else {
+				b.onRawCatchNode(ctx, node)
+			}
+		}
+		return modified, drop
+	}
 	cli.AddEventHandler(b.handle)
 	b.cliMu.Lock()
 	b.cli = cli
@@ -804,8 +822,18 @@ func (b *Backend) handle(evt any) {
 		}
 		for _, j := range e.Leave {
 			if b.isMe(j) {
-				// A group you left isn't one you share with anyone.
-				b.store.clearMembers(ctx, e.JID.String())
+				b.markGroupExited(ctx, e.JID.String())
+				break
+			}
+		}
+		for _, j := range e.Join {
+			if b.isMe(j) {
+				if err := b.store.setGroupExited(ctx, e.JID.String(), false); err != nil {
+					b.log.Warnf("mark %s joined: %v", e.JID, err)
+				}
+				b.emitChat(e.JID.String())
+				b.emit(model.CommunitiesEvent{})
+				break
 			}
 		}
 		if e.Name != nil {
@@ -822,6 +850,7 @@ func (b *Backend) handle(evt any) {
 		// Joining a community joins its parent group and its announcements
 		// too: without their place in it, both would list as plain groups.
 		_ = b.store.setGroupShape(ctx, &e.GroupInfo)
+		_ = b.store.setGroupExited(ctx, jid, false)
 		_ = b.store.setMembers(ctx, &e.GroupInfo)
 		if e.IsParent {
 			// A community's parent group isn't a chat.
@@ -835,6 +864,25 @@ func (b *Backend) handle(evt any) {
 			b.emit(model.CommunitiesEvent{})
 		}
 	}
+}
+
+// markGroupExited is called only after WhatsApp confirms the exit, or when
+// its group membership event says we left. Refresh the list and group
+// information so the UI can offer deletion of the remaining local history.
+func (b *Backend) markGroupExited(ctx context.Context, chatID string) {
+	if err := b.store.setGroupExited(ctx, chatID, true); err != nil {
+		b.log.Warnf("mark %s exited: %v", chatID, err)
+	}
+	b.store.clearMembers(ctx, chatID)
+	b.subMu.Lock()
+	delete(b.subtitles, chatID)
+	b.subMu.Unlock()
+	b.infoMu.Lock()
+	delete(b.infoFetched, chatID)
+	b.infoMu.Unlock()
+	b.emitChat(chatID)
+	b.emit(model.InfoEvent{ChatID: chatID})
+	b.emit(model.CommunitiesEvent{})
 }
 
 // updateChat stores one chat setting. During a full app state sync there are
@@ -951,6 +999,7 @@ func (b *Backend) onMessage(e *events.Message) {
 		return
 	}
 	b.apply(&e.Info, p)
+	b.saveCatchNodes(e)
 }
 
 // onUndecryptable stores a view once message: WhatsApp sends those only to
@@ -1439,7 +1488,9 @@ func (b *Backend) refreshGroupNames() {
 	for i, g := range groups {
 		joined[i] = g.JID.String()
 	}
-	b.store.keepMembers(b.ctx, joined)
+	if err := b.store.syncJoinedGroups(b.ctx, joined); err != nil {
+		b.log.Warnf("sync joined groups: %v", err)
+	}
 	for _, g := range groups {
 		if err := b.store.setGroupShape(b.ctx, g); err != nil {
 			b.log.Warnf("store group %s: %v", g.JID, err)

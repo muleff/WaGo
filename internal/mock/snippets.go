@@ -289,3 +289,22 @@ func (b *Backend) MessagePayload(chat, id string) (string, error) {
 func (b *Backend) ExportMessagePayload(chat, id string) (string, error) {
 	return "", errors.New("File export is unavailable in demo mode. Use Copy JSON.")
 }
+
+func (b *Backend) MessagePayloadWithAdditionalNodes(chat, id string) (string, error) {
+	body, err := b.MessagePayload(chat, id)
+	if err != nil {
+		return "", err
+	}
+	var msg json.RawMessage = []byte(body)
+	data, err := json.MarshalIndent(struct {
+		Message                  json.RawMessage `json:"message"`
+		AdditionalNodes          any             `json:"additionalNodes"`
+		AdditionalNodesAvailable bool            `json:"additionalNodesAvailable"`
+		Note                     string          `json:"note"`
+	}{msg, nil, false, "The demo backend has no raw additionalNodes."}, "", "  ")
+	return string(data), err
+}
+
+func (b *Backend) ExportMessagePayloadWithAdditionalNodes(chat, id string) (string, error) {
+	return "", errors.New("File export is unavailable in demo mode. Use Copy JSON.")
+}

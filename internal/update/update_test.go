@@ -16,6 +16,12 @@ import (
 	"testing"
 )
 
+func TestUpdateRepository(t *testing.T) {
+	if Repo != "muleff/WaGo" {
+		t.Fatalf("release source = %q, want muleff/WaGo", Repo)
+	}
+}
+
 func TestParseVersion(t *testing.T) {
 	for _, tc := range []struct {
 		a, b  string

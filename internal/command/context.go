@@ -64,7 +64,7 @@ type Host interface {
 	// EditSnippet opens a snippet in Settings > Snippets.
 	EditSnippet(id int64)
 	// ShowPayload shows a message's payload (/catch).
-	ShowPayload(chatID, messageID string)
+	ShowPayload(chatID, messageID string, additionalNodes bool)
 }
 
 // Context is everything a running command may use.

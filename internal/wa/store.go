@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS wz_messages (
 	-- whose media never came), and the content of its latest edit.
 	raw_payload  BLOB,
 	edit_payload BLOB,
+	additional_nodes BLOB, -- original stanza nodes, only when made available by the transport
 	PRIMARY KEY (chat, id)
 );
 CREATE INDEX IF NOT EXISTS wz_messages_chat_ts ON wz_messages (chat, ts);
@@ -164,6 +165,8 @@ var migrations = []string{
 	// The settings (settledBits) app state or this device has set, which a
 	// history sync's copy, taken when the device linked, mustn't undo.
 	`ALTER TABLE wz_chats ADD COLUMN settled INTEGER NOT NULL DEFAULT 0`,
+	`ALTER TABLE wz_messages ADD COLUMN additional_nodes BLOB`,
+	`ALTER TABLE wz_chats ADD COLUMN exited INTEGER NOT NULL DEFAULT 0`, // 1 after leaving a group; history remains deletable
 }
 
 func (s *msgStore) init(ctx context.Context) error {
@@ -389,9 +392,10 @@ func (s *msgStore) addUnread(ctx context.Context, jid string, forMe bool) error 
 // it and the envelope it came in.
 type storedMsg struct {
 	*model.Message
-	senderJID  string
-	senderPush string
-	rawPayload []byte // the marshaled waE2E message
+	senderJID       string
+	senderPush      string
+	rawPayload      []byte // the marshaled waE2E message
+	additionalNodes []byte // raw JSON of supplied waBinary.Node values; nil when unavailable
 	// quotedMedia is the photo, video or voice message the message
 	// quotes (quotedID), when the quote carries what downloading it takes
 	// (see fillViewOnce).
@@ -405,17 +409,18 @@ type storedMsg struct {
 // deleted.
 func (s *msgStore) putMessage(ctx context.Context, x execer, m storedMsg) error {
 	_, err := x.ExecContext(ctx, `
-		INSERT INTO wz_messages (chat, id, sender_jid, sender_push, from_me, ts, kind, media, text, receipt, raw_payload)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO wz_messages (chat, id, sender_jid, sender_push, from_me, ts, kind, media, text, receipt, raw_payload, additional_nodes)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT (chat, id) DO UPDATE SET
 			sender_push = excluded.sender_push, kind = excluded.kind, media = excluded.media,
 			text = CASE WHEN wz_messages.edited != 0 OR wz_messages.edit_payload IS NOT NULL
 				THEN wz_messages.text ELSE excluded.text END,
 			receipt = MAX(wz_messages.receipt, excluded.receipt),
-			raw_payload = COALESCE(wz_messages.raw_payload, excluded.raw_payload)
+				raw_payload = COALESCE(wz_messages.raw_payload, excluded.raw_payload),
+				additional_nodes = COALESCE(wz_messages.additional_nodes, excluded.additional_nodes)
 		WHERE wz_messages.kind != ?`,
 		m.ChatID, m.ID, m.senderJID, m.senderPush, boolInt(m.FromMe), m.Time.Unix(), int(m.Kind), int(m.Media),
-		m.Text, int(m.Receipt), m.rawPayload, int(model.KindDeleted))
+		m.Text, int(m.Receipt), m.rawPayload, m.additionalNodes, int(model.KindDeleted))
 	if err != nil {
 		return err
 	}
@@ -786,8 +791,8 @@ type rawChat struct {
 // are read only for what the list shows of them: how long a recording
 // lasts, and whom a text mentions.
 var chatQuery = fmt.Sprintf(`
-	SELECT c.jid, c.name, c.is_group, c.pinned, c.muted_until, c.archived, c.unread, c.last_ts, c.favorite,
-		c.mentioned, c.general, m.id, m.sender_jid, m.sender_push, m.from_me, m.ts, m.kind, m.media, m.text, m.receipt,
+		SELECT c.jid, c.name, c.is_group, c.pinned, c.muted_until, c.archived, c.unread, c.last_ts, c.favorite,
+			c.mentioned, c.general, c.exited, m.id, m.sender_jid, m.sender_push, m.from_me, m.ts, m.kind, m.media, m.text, m.receipt,
 		CASE WHEN m.media IN (%d, %d, %d, %d) OR instr(m.text, '@') > 0 THEN m.raw_payload END,
 		CASE WHEN instr(m.text, '@') > 0 THEN m.edit_payload END
 	FROM wz_chats c
@@ -799,7 +804,7 @@ func scanChat(sc scanner, now time.Time) (rawChat, error) {
 	var (
 		c                              model.Chat
 		isGroup, archived, unread, fav int
-		mentioned, general             int
+		mentioned, general, exited     int
 		pinned, mutedUntil, lastTS     int64
 		mID, mSender, mPush, mText     sql.NullString
 		mFromMe, mTS, mKind, mMedia    sql.NullInt64
@@ -807,11 +812,12 @@ func scanChat(sc scanner, now time.Time) (rawChat, error) {
 		mRaw, mEdit                    []byte
 	)
 	err := sc.Scan(&c.ID, &c.Name, &isGroup, &pinned, &mutedUntil, &archived, &unread, &lastTS, &fav,
-		&mentioned, &general, &mID, &mSender, &mPush, &mFromMe, &mTS, &mKind, &mMedia, &mText, &mReceipt, &mRaw, &mEdit)
+		&mentioned, &general, &exited, &mID, &mSender, &mPush, &mFromMe, &mTS, &mKind, &mMedia, &mText, &mReceipt, &mRaw, &mEdit)
 	if err != nil {
 		return rawChat{}, err
 	}
 	c.IsGroup = isGroup != 0
+	c.Exited = exited != 0
 	c.Pinned = pinned > 0
 	c.Muted = mutedUntil == -1 || mutedUntil > now.Unix()
 	if c.Muted && mutedUntil > 0 {

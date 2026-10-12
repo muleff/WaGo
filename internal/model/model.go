@@ -302,6 +302,7 @@ type Chat struct {
 	ID      string
 	Name    string
 	IsGroup bool
+	Exited  bool // this account left the group; old messages may remain locally
 	Pinned  bool
 	Muted   bool
 	// MuteUntil is when a timed mute ends; zero while muted means always.

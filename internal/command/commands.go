@@ -117,7 +117,8 @@ var All = []*Command{
 	},
 	{
 		Name: "catch", Description: "command.catch",
-		Run: runCatch,
+		Options: []Option{{Name: "adn", Description: "Include available additionalNodes metadata", Kind: Choice, Choices: []string{"--adn"}}},
+		Run:     runCatch,
 	},
 	{
 		Name: "fakemsg", Description: "command.fakemsg",

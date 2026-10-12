@@ -3,6 +3,8 @@ package wa
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +12,7 @@ import (
 	"time"
 
 	whatsmeow "github.com/polymorfa/hypermeow"
+	waBinary "github.com/polymorfa/hypermeow/binary"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 	"github.com/polymorfa/hypermeow/store"
 	"github.com/polymorfa/hypermeow/types"
@@ -72,6 +75,129 @@ func TestRawPayloadStorageAndEdits(t *testing.T) {
 	if _, err = b.MessagePayload("123@g.us", "original"); err == nil {
 		t.Fatal("duplicate resurrected deleted payload")
 	}
+}
+
+func TestCatchAdditionalNodesStorageAndMissingMetadata(t *testing.T) {
+	b := testBackend(t)
+	bare := snippetEvent("without-nodes", &waE2E.Message{Conversation: proto.String("plain")})
+	b.onMessage(bare)
+	defaultJSON, err := b.MessagePayload("123@g.us", bare.Info.ID)
+	if err != nil || strings.Contains(defaultJSON, "additionalNodes") {
+		t.Fatalf("default /catch changed: %s, %v", defaultJSON, err)
+	}
+	missing, err := b.MessagePayloadWithAdditionalNodes("123@g.us", bare.Info.ID)
+	if err != nil || !strings.Contains(missing, `"additionalNodesAvailable": false`) || !strings.Contains(missing, `"additionalNodes": null`) {
+		t.Fatalf("missing additionalNodes: %s, %v", missing, err)
+	}
+	nodes := []waBinary.Node{
+		{Tag: "meta", Attrs: waBinary.Attrs{"is_group_status": "true", "source": "real-stanza"}},
+		{Tag: "extra", Content: []byte{0, 1, 254}},
+		{Tag: "nested", Content: []waBinary.Node{{Tag: "child", Attrs: waBinary.Attrs{"id": "7"}}}},
+	}
+	withNodes := snippetEvent("with-nodes", &waE2E.Message{Conversation: proto.String("hello")})
+	b.onMessageWithAdditionalNodes(withNodes, nodes)
+	full, err := b.MessagePayloadWithAdditionalNodes("123@g.us", withNodes.Info.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded struct {
+		Message struct {
+			Conversation string `json:"conversation"`
+		} `json:"message"`
+		AdditionalNodes json.RawMessage `json:"additionalNodes"`
+		Available       bool            `json:"additionalNodesAvailable"`
+	}
+	if err := json.Unmarshal([]byte(full), &decoded); err != nil {
+		t.Fatal(err)
+	}
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, decoded.AdditionalNodes); err != nil {
+		t.Fatal(err)
+	}
+	if !decoded.Available || decoded.Message.Conversation != "hello" || !bytes.Equal(compact.Bytes(), mustJSON(t, nodes)) {
+		t.Fatalf("raw additionalNodes not preserved: %s", full)
+	}
+	// Receiving the same message without metadata doesn't erase the nodes.
+	b.onMessage(withNodes)
+	after, err := b.MessagePayloadWithAdditionalNodes("123@g.us", withNodes.Info.ID)
+	if err != nil || after != full {
+		t.Fatalf("duplicate erased metadata: %s, %v", after, err)
+	}
+	if err := b.store.init(b.ctx); err != nil {
+		t.Fatal("schema migration isn't repeatable:", err)
+	}
+	after, err = b.MessagePayloadWithAdditionalNodes("123@g.us", withNodes.Info.ID)
+	if err != nil || after != full {
+		t.Fatalf("metadata lost after schema init: %s, %v", after, err)
+	}
+}
+
+func TestCatchRawNodeHandlerPreservesActualStanzaNodes(t *testing.T) {
+	b := testBackend(t)
+	b.useDevice(&store.Device{})
+	const id = "raw-stanza"
+	stanza := &waBinary.Node{
+		Tag:   "message",
+		Attrs: waBinary.Attrs{"from": types.NewJID("123", types.GroupServer), "id": id},
+		Content: []waBinary.Node{
+			{Tag: "enc", Content: []byte("ciphertext must not leak")},
+			{Tag: "meta", Attrs: waBinary.Attrs{"is_group_status": "false"}},
+			{Tag: "business", Content: []waBinary.Node{{Tag: "label", Content: []byte("nested bytes")}}},
+			{Tag: "device-identity", Content: []byte("private identity")},
+		},
+	}
+	if modified, drop := b.client().RawNodeHandler(b.ctx, stanza); modified != nil || drop {
+		t.Fatalf("RawNodeHandler changed or dropped incoming message: modified=%v drop=%v", modified, drop)
+	}
+	// The unit backend has no linked identity/contact store; only the handler
+	// is being exercised here. Let the regular message fixture resolve offline.
+	b.cli = nil
+	e := snippetEvent(id, &waE2E.Message{Conversation: proto.String("message body")})
+	b.onMessage(e)
+	full, err := b.MessagePayloadWithAdditionalNodes("123@g.us", id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"additionalNodesAvailable": true`, `"Tag": "meta"`, `"Tag": "business"`, `"Tag": "label"`} {
+		if !strings.Contains(full, want) {
+			t.Errorf("missing %s in %s", want, full)
+		}
+	}
+	for _, unwanted := range []string{"ciphertext must not leak", "private identity", `"Tag": "enc"`, `"Tag": "device-identity"`} {
+		if strings.Contains(full, unwanted) {
+			t.Errorf("captured transport frame %q: %s", unwanted, full)
+		}
+	}
+	if count := len(b.catchNodes.pending); count != 0 {
+		t.Errorf("pending nodes after store: %d", count)
+	}
+}
+
+func TestCatchRawNodePendingBounded(t *testing.T) {
+	b := testBackend(t)
+	for i := 0; i < catchNodeMaxPending+20; i++ {
+		b.onRawCatchNode(b.ctx, &waBinary.Node{Tag: "message", Attrs: waBinary.Attrs{
+			"id": fmt.Sprintf("msg-%d", i), "from": types.NewJID("123", types.GroupServer)},
+			Content: []waBinary.Node{{Tag: "meta", Attrs: waBinary.Attrs{"present": "yes"}}}})
+	}
+	if got := len(b.catchNodes.pending); got != catchNodeMaxPending {
+		t.Fatalf("pending nodes = %d, want %d", got, catchNodeMaxPending)
+	}
+	other := snippetEvent("never-observed", &waE2E.Message{Conversation: proto.String("no stanza")})
+	b.onMessage(other)
+	data, err := b.MessagePayloadWithAdditionalNodes(other.Info.Chat.String(), other.Info.ID)
+	if err != nil || !strings.Contains(data, `"additionalNodesAvailable": false`) {
+		t.Fatalf("metadata fabricated for unobserved stanza: %s, %v", data, err)
+	}
+}
+
+func mustJSON(t *testing.T, value any) []byte {
+	t.Helper()
+	data, err := json.Marshal(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 func TestSnippetsTextAndLegacyMessages(t *testing.T) {

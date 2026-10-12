@@ -270,6 +270,20 @@ func (b *Backend) SendFile(chatID string, a model.Attachment, d model.Draft) *mo
 		m.Duration = mp4Seconds(a.Path)
 	case model.MediaAudio:
 		m.Duration = audioSeconds(a.Path, m.FileType, st.Size())
+	case model.MediaVoice:
+		m.Duration = audioSeconds(a.Path, m.FileType, st.Size())
+		// The composer deletes its temporary capture when SendFile returns.
+		// Hold a small voice note in memory until upload has finished, rather
+		// than let the background uploader race that deletion.
+		if st.Size() > 16<<20 {
+			b.emit(model.NoticeEvent{Text: "The voice recording is too large to send."})
+			return nil
+		}
+		up.data, err = os.ReadFile(a.Path)
+		if err != nil {
+			b.emit(model.NoticeEvent{Text: "Couldn't read the voice recording."})
+			return nil
+		}
 	case model.MediaDocument:
 		if m.Text == "" {
 			m.Text = name
@@ -285,7 +299,11 @@ func (b *Backend) SendFile(chatID string, a model.Attachment, d model.Draft) *mo
 	}
 	// Keep a copy so your own media shows (and opens) without a download.
 	if up.data != nil {
-		up.keep(b.mediaPath(chatID, m.ID))
+		if a.Media == model.MediaVoice {
+			up.keep(b.mediaFilePath(payloadView(m, msg)))
+		} else {
+			up.keep(b.mediaPath(chatID, m.ID))
+		}
 	} else if st.Size() <= maxLocalCopy {
 		up.copyTo(b.mediaFilePath(payloadView(m, msg)))
 	}
@@ -387,6 +405,7 @@ var mediaTypes = map[model.Media]whatsmeow.MediaType{
 	model.MediaImage:    whatsmeow.MediaImage,
 	model.MediaVideo:    whatsmeow.MediaVideo,
 	model.MediaAudio:    whatsmeow.MediaAudio,
+	model.MediaVoice:    whatsmeow.MediaAudio,
 	model.MediaDocument: whatsmeow.MediaDocument,
 }
 

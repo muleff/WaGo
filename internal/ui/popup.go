@@ -223,7 +223,7 @@ func (u *UI) chatMenuItems(c *model.Chat) []menuItem {
 	add(menuItem{key: "lists", ic: icAddToList, label: u.locale.Text("Add to list"), arrow: true})
 	add(menuItem{divider: true})
 	add(menuItem{key: "clear", ic: icClear, label: u.locale.Text("Clear chat"), run: func() { u.confirmClearChat(id) }})
-	if c.IsGroup {
+	if c.IsGroup && !c.Exited {
 		name := c.Name
 		add(menuItem{key: "exit", ic: icLogout, label: u.locale.Text("Exit group"), run: func() { u.confirmExitGroup(id, name) }})
 	} else {

@@ -32,6 +32,8 @@ type SnippetBackend interface {
 	SendSnippet(chatID string, id int64, reply *Message, vars map[string]string) (*Message, error)
 	MessagePayload(chatID, messageID string) (string, error)
 	ExportMessagePayload(chatID, messageID string) (string, error)
+	MessagePayloadWithAdditionalNodes(chatID, messageID string) (string, error)
+	ExportMessagePayloadWithAdditionalNodes(chatID, messageID string) (string, error)
 }
 
 // SnippetVars lists the variables a snippet may use, for the settings page.

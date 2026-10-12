@@ -42,6 +42,29 @@ func TestConvMenu(t *testing.T) {
 	}
 }
 
+func TestExitedGroupCanBeDeleted(t *testing.T) {
+	u := New(mock.New())
+	u.Start(func() {})
+	c := &model.Chat{ID: "exited@g.us", Name: "Former group", IsGroup: true, Exited: true}
+	check := func(name string, items []menuItem) {
+		t.Helper()
+		var exit, del bool
+		for _, it := range items {
+			switch it.label {
+			case "Exit group":
+				exit = true
+			case "Delete chat":
+				del = it.run != nil
+			}
+		}
+		if exit || !del {
+			t.Errorf("%s: exited group has Exit group=%v, functional Delete chat=%v", name, exit, del)
+		}
+	}
+	check("chat list", u.chatMenuItems(c))
+	check("conversation", u.convMenuItems(c))
+}
+
 // TestDisappearingAndTheme sets a chat's timer and theme.
 func TestDisappearingAndTheme(t *testing.T) {
 	u := New(mock.New())

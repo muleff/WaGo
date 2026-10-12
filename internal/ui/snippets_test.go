@@ -117,6 +117,23 @@ func TestCatchLocalOnlyAndMissingReply(t *testing.T) {
 	}
 }
 
+func TestCatchAdditionalNodesShowsAvailability(t *testing.T) {
+	st := newSlashTest(t, "rina")
+	before := len(st.b.Messages("rina", 1000))
+	st.u.conv.reply = st.b.Messages("rina", 1)[0]
+	st.typeText("/catch --adn ")
+	st.press(key.NameReturn)
+	waitSnippetUI(t, st, func() bool { return st.u.dialog.snippet != nil && !st.u.dialog.snippet.loading })
+	d := st.u.dialog.snippet
+	if !d.additionalNodes || !strings.Contains(d.body.Text(), `"additionalNodesAvailable": false`) ||
+		!strings.Contains(d.body.Text(), `"additionalNodes": null`) || !strings.Contains(d.body.Text(), `"message"`) {
+		t.Fatalf("/catch --adn dialog: %s", d.body.Text())
+	}
+	if len(st.b.Messages("rina", 1000)) != before {
+		t.Fatal("/catch --adn sent a message")
+	}
+}
+
 func TestSnippetSaveNamedAndUnknown(t *testing.T) {
 	st := newSlashTest(t, "rina")
 	u := st.u
@@ -145,9 +162,9 @@ func TestSnippetSaveNamedAndUnknown(t *testing.T) {
 
 func TestSnippetAccountStateAndClosedAsyncDialog(t *testing.T) {
 	st := newSlashTest(t, "rina")
-	st.u.openPayload("rina", st.b.Messages("rina", 1)[0].ID)
+	st.u.openPayload("rina", st.b.Messages("rina", 1)[0].ID, false)
 	old := st.u.dialog.snippet
-	st.u.openPayload("rina", st.b.Messages("rina", 1)[0].ID)
+	st.u.openPayload("rina", st.b.Messages("rina", 1)[0].ID, false)
 	waitSnippetUI(t, st, func() bool { return !st.u.dialog.snippet.loading })
 	if st.u.dialog.snippet == old {
 		t.Fatal("old request reopened its dialog")

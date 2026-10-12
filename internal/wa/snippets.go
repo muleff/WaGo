@@ -3,12 +3,14 @@ package wa
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"strings"
 	"unicode/utf8"
 
+	waBinary "github.com/polymorfa/hypermeow/binary"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 	"github.com/polymorfa/hypermeow/types"
 	"github.com/polymorfa/hypermeow/types/events"
@@ -76,6 +78,74 @@ func (b *Backend) ExportMessagePayload(chat, id string) (string, error) {
 		return "", err
 	}
 	return saveDownload("Message payload.json", []byte(text))
+}
+
+// MessagePayloadWithAdditionalNodes includes any original stanza nodes that
+// were actually supplied by the transport. A decrypted events.Message alone
+// doesn't expose them; nil means unavailable, not that the stanza had none.
+func (b *Backend) MessagePayloadWithAdditionalNodes(chat, id string) (string, error) {
+	msg, err := b.rawMessage(chat, id)
+	if err != nil {
+		return "", err
+	}
+	payload, err := protojson.Marshal(msg)
+	if err != nil {
+		return "", err
+	}
+	var nodes []byte
+	if err := b.db.QueryRowContext(b.ctx, `SELECT additional_nodes FROM wz_messages WHERE chat = ? AND id = ?`, chat, id).Scan(&nodes); err != nil {
+		return "", err
+	}
+	out := struct {
+		Message                  json.RawMessage `json:"message"`
+		AdditionalNodes          json.RawMessage `json:"additionalNodes"`
+		AdditionalNodesAvailable bool            `json:"additionalNodesAvailable"`
+		Note                     string          `json:"note,omitempty"`
+	}{Message: payload, AdditionalNodes: json.RawMessage("null"), AdditionalNodesAvailable: nodes != nil}
+	if nodes != nil {
+		out.AdditionalNodes = nodes
+	} else {
+		out.Note = "No raw additionalNodes metadata was captured for this message."
+	}
+	data, err := json.MarshalIndent(out, "", "  ")
+	return string(data), err
+}
+
+func (b *Backend) ExportMessagePayloadWithAdditionalNodes(chat, id string) (string, error) {
+	text, err := b.MessagePayloadWithAdditionalNodes(chat, id)
+	if err != nil {
+		return "", err
+	}
+	return saveDownload("Message payload + additionalNodes.json", []byte(text))
+}
+
+// captureAdditionalNodes persists binary stanza nodes only when the caller
+// has obtained the actual nodes. JSON preserves nested nodes and binary data.
+func (s *msgStore) captureAdditionalNodes(ctx context.Context, chat, id string, nodes []waBinary.Node) error {
+	if nodes == nil {
+		return nil
+	}
+	data, err := json.Marshal(nodes)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.ExecContext(ctx, `UPDATE wz_messages SET additional_nodes = COALESCE(additional_nodes, ?)
+		WHERE chat = ? AND id = ? AND kind != ?`, data, chat, id, int(model.KindDeleted))
+	return err
+}
+
+// onMessageWithAdditionalNodes is for event transports that provide the raw
+// stanza nodes alongside a decoded message; hypermeow's events.Message alone
+// doesn't contain them, so ordinary events continue through onMessage.
+func (b *Backend) onMessageWithAdditionalNodes(e *events.Message, nodes []waBinary.Node) {
+	b.onMessage(e)
+	if nodes == nil {
+		return
+	}
+	chat := b.canonical(b.ctx, e.Info.Chat).String()
+	if err := b.store.captureAdditionalNodes(b.ctx, chat, e.Info.ID, nodes); err != nil {
+		b.log.Warnf("additionalNodes %s in %s: %v", e.Info.ID, chat, err)
+	}
 }
 
 func (b *Backend) Snippets() ([]model.Snippet, error) {

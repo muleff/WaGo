@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/skidy89/openWA/internal/model"
 )
 
@@ -76,5 +77,21 @@ func TestMediaExt(t *testing.T) {
 		if got := mediaExt(&c.m); got != c.want {
 			t.Errorf("mediaExt(%+v) = %q, want %q", c.m, got, c.want)
 		}
+	}
+}
+
+func TestVoiceUsesAudioEncryptionAndPTT(t *testing.T) {
+	if got := mediaTypes[model.MediaVoice]; got != whatsmeow.MediaAudio {
+		t.Fatalf("voice upload type = %q, want WhatsApp audio encryption", got)
+	}
+	m := &model.Message{
+		Media: model.MediaVoice, FileType: "audio/ogg; codecs=opus",
+		FileSize: 256, Duration: 7,
+	}
+	msg, _ := fileMessage(m, upload{}, "", nil, false)
+	audio := msg.GetAudioMessage()
+	if audio == nil || !audio.GetPTT() || audio.GetSeconds() != 7 ||
+		audio.GetMimetype() != "audio/ogg; codecs=opus" {
+		t.Fatalf("voice envelope: %+v", audio)
 	}
 }

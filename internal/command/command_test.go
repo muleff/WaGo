@@ -168,6 +168,30 @@ func TestMatching(t *testing.T) {
 	}
 }
 
+func TestCatchAdditionalNodesFlag(t *testing.T) {
+	for _, tc := range []struct {
+		input, wantFlag string
+		problem         bool
+	}{
+		{"/catch ", "", false},
+		{"/catch --adn ", "--adn", false},
+		{"/catch --ADN ", "--adn", false},
+		{"/catch --other ", "", true},
+		{"/catch --adn unwanted", "--adn", true},
+	} {
+		in, ok := Parse(tc.input, len([]rune(tc.input)), nil, nil)
+		if !ok || in.Cmd == nil || in.Cmd.Name != "catch" {
+			t.Fatalf("Parse(%q): %+v, ok=%v", tc.input, in, ok)
+		}
+		if got := in.Problem() != ""; got != tc.problem {
+			t.Errorf("Parse(%q): problem = %q", tc.input, in.Problem())
+		}
+		if !tc.problem && in.Text("adn") != tc.wantFlag {
+			t.Errorf("Parse(%q): adn = %q, want %q", tc.input, in.Text("adn"), tc.wantFlag)
+		}
+	}
+}
+
 func TestParseNumber(t *testing.T) {
 	s := "/purge 25"
 	in, ok := Parse(s, len([]rune(s)), nil, nil)

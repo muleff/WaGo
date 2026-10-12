@@ -204,6 +204,17 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 	if !info.IsGroup {
 		return u.contactRows(gtx, c, info)
 	}
+	if c.Exited {
+		// Group information can be cached from before the exit.
+		copyInfo := *info
+		copyInfo.Members = nil
+		for _, member := range info.Members {
+			if !member.Me {
+				copyInfo.Members = append(copyInfo.Members, member)
+			}
+		}
+		info = &copyInfo
+	}
 	rows := []layout.Widget{
 		func(gtx C) D { return u.infoProfile(gtx, c, info) },
 	}
@@ -237,11 +248,11 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 		item("privacy", listItem{ic: icShield, title: "Advanced chat privacy", sub: "Off"}),
 	)
 	admin := u.isAdminIn(info)
-	if admin {
+	if admin && !c.Exited {
 		rows = append(rows, item("perms", listItem{ic: icSettings, title: "Group permissions"}))
 	}
 	rows = append(rows, u.infoDivider(12, 3.2))
-	if u.inCommunity[c.ID] == nil {
+	if !c.Exited && u.inCommunity[c.ID] == nil {
 		rows = append(rows, func(gtx C) D {
 			return u.infoCircleRow(gtx, "community", func(gtx C) D {
 				return roundedSquare(gtx, 52, 12, p.Green, icGroupsFill, 32, rgb(0xffffff))
@@ -256,7 +267,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 	if chat := u.chatByID(c.ID); chat != nil && u.canAddMembers(chat) {
 		rows = append(rows, u.greenAction("add", icPersonAddFill, "Add member", false))
 	}
-	if admin {
+	if admin && !c.Exited {
 		rows = append(rows,
 			u.greenAction("link", icLink, "Invite to group via link", false),
 			u.greenAction("email", icMail, "Invite to group via email", true),
@@ -298,8 +309,12 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 			u.infoFavRow(chat),
 			u.infoRow("list", listItem{ic: icAddToList, title: "Add to list"}, func() { u.openListsMenu(chat) }),
 			u.infoRow("clear", listItem{ic: icClear, title: "Clear chat", danger: true}, func() { u.confirmClearChat(id) }),
-			u.infoRow("exit", listItem{ic: icLogout, title: "Exit group", danger: true}, func() { u.confirmExitGroup(id, name) }),
 		)
+		if chat.Exited {
+			rows = append(rows, u.infoRow("delete", listItem{ic: icDelete, title: "Delete chat", danger: true}, func() { u.confirmDeleteChat(id) }))
+		} else {
+			rows = append(rows, u.infoRow("exit", listItem{ic: icLogout, title: "Exit group", danger: true}, func() { u.confirmExitGroup(id, name) }))
+		}
 	}
 	rows = append(rows, u.infoRow("report", listItem{ic: icThumbDown, title: "Report group", danger: true}, u.reportUnsupported))
 	if !info.Created.IsZero() {
@@ -411,6 +426,9 @@ func (u *UI) infoProfile(gtx C, c *model.Chat, info *model.ChatInfo) D {
 		if n == 0 {
 			sub = u.label(16.8, "Group", p.TextSecondary).Layout
 		}
+		if c.Exited {
+			sub = u.label(16.8, "You are no longer a member", p.TextSecondary).Layout
+		}
 	} else {
 		sub = u.contactSubtitle(c, info)
 	}
@@ -424,6 +442,8 @@ func (u *UI) infoProfile(gtx C, c *model.Chat, info *model.ChatInfo) D {
 	case !info.IsGroup && (u.selected == nil || u.selected.ID != c.ID):
 		// A group member's info offers to message them instead.
 		actions = []action{{"message", icChats, "Message"}, {"share", icForward, "Share"}}
+	case info.IsGroup && c.Exited:
+		actions = []action{{"search", icSearch, "Search"}}
 	case info.IsGroup:
 		actions = []action{{"voice", icCallLine, "Voice"}, {"status", icAddCircle, "Status"}, {"add", icPersonAdd, "Add"}, {"search", icSearch, "Search"}}
 	default:

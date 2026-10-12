@@ -898,6 +898,9 @@ func (b *Backend) DeleteChat(chatID string) {
 	ts, key := b.lastKey(chatID)
 	_ = b.store.deleteChat(b.ctx, chatID, 0)
 	b.emitAllChats()
+	if jid.Server == types.GroupServer {
+		b.emit(model.CommunitiesEvent{})
+	}
 	if b.connected() != nil {
 		b.sendAppState(appstate.BuildDeleteChat(jid, ts, key, true))
 	}
@@ -916,6 +919,7 @@ func (b *Backend) LeaveGroup(chatID string) {
 			b.emit(model.NoticeEvent{Text: "Couldn't exit the group."})
 			return
 		}
+		b.markGroupExited(b.ctx, chatID)
 		b.emit(model.NoticeEvent{Text: "You exited the group."})
 	}()
 }
@@ -972,9 +976,11 @@ func (s *msgStore) clearChat(ctx context.Context, chat string, upTo int64) error
 // newer messages are left.
 func (s *msgStore) deleteChat(ctx context.Context, chat string, upTo int64) error {
 	_, err := s.db.ExecContext(ctx, `DELETE FROM wz_messages WHERE chat = ?1 AND (?2 = 0 OR ts <= ?2);
-		DELETE FROM wz_chats WHERE jid = ?1 AND NOT EXISTS (SELECT 1 FROM wz_messages WHERE chat = ?1);
-		DELETE FROM wz_list_chats WHERE chat = ?1 AND NOT EXISTS (SELECT 1 FROM wz_chats WHERE jid = ?1);
-		`+dropOrphanEdits, chat, upTo)
+			DELETE FROM wz_chats WHERE jid = ?1 AND NOT EXISTS (SELECT 1 FROM wz_messages WHERE chat = ?1);
+			DELETE FROM wz_list_chats WHERE chat = ?1 AND NOT EXISTS (SELECT 1 FROM wz_chats WHERE jid = ?1);
+			DELETE FROM wz_members WHERE chat = ?1 AND NOT EXISTS (SELECT 1 FROM wz_chats WHERE jid = ?1);
+			DELETE FROM wz_member_changes WHERE chat = ?1 AND NOT EXISTS (SELECT 1 FROM wz_chats WHERE jid = ?1);
+			`+dropOrphanEdits, chat, upTo)
 	return err
 }
 

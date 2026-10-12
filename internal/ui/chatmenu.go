@@ -35,7 +35,7 @@ func (u *UI) convMenuItems(c *model.Chat) []menuItem {
 		return items
 	}
 	if c.IsGroup {
-		if u.canAddMembers(c) {
+		if !c.Exited && u.canAddMembers(c) {
 			add(menuItem{key: "add", ic: icPersonAdd, label: u.locale.Text("Add member"), run: func() { u.openAddMembers(c) }})
 		}
 		add(menuItem{key: "info", ic: icInfo, label: u.locale.Text("Group info"), run: func() { u.openInfo(id) }})
@@ -64,7 +64,7 @@ func (u *UI) convMenuItems(c *model.Chat) []menuItem {
 		add(menuItem{key: "block", ic: icBlock, label: u.locale.Text("Block"), run: func() { u.confirmBlock(id, c.Name) }})
 	}
 	add(menuItem{key: "clear", ic: icClear, label: u.locale.Text("Clear chat"), run: func() { u.confirmClearChat(id) }})
-	if c.IsGroup {
+	if c.IsGroup && !c.Exited {
 		add(menuItem{key: "exit", ic: icLogout, label: u.locale.Text("Exit group"), run: func() { u.confirmExitGroup(id, c.Name) }})
 	} else {
 		add(menuItem{key: "delete", ic: icDelete, label: u.locale.Text("Delete chat"), run: func() { u.confirmDeleteChat(id) }})
@@ -371,7 +371,7 @@ func groupDigits(code string) string {
 
 // canAddMembers reports whether you may add people to a group.
 func (u *UI) canAddMembers(c *model.Chat) bool {
-	if !c.IsGroup || u.announcementsOf(c) != nil {
+	if !c.IsGroup || c.Exited || u.announcementsOf(c) != nil {
 		return false
 	}
 	info := u.timerInfo(c.ID)

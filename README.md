@@ -168,6 +168,7 @@ back on asks again.
 | `/snippet send <name>` | Sends a saved message; the picker over the composer offers them as you type |
 | `/snippet save [name]` | Saves the whole message you reply to (a poll, document or photo too), under that name or a generated one |
 | `/catch` | Opens the stored payload of the message you reply to, with Copy JSON and Export JSON |
+| `/catch --adn` | Includes the actual captured `additionalNodes` from the message stanza in Copy/Export JSON, when available |
 
 Manage saved messages in **Settings > Snippets**: search, add text or message JSON,
 edit, rename, and delete. Snippets belong to the current account. Their text (and a
@@ -185,6 +186,9 @@ messages. Older messages may not have one. JSON includes fields understood by th
 pinned protocol schema; unknown protobuf fields remain in the database. An edited
 message exposes its latest available edit content. Deleted payloads follow the
 existing deletion preferences, and view once export requires Replay view once.
+`/catch --adn` only includes additional stanza nodes observed by this version
+of WaGo; older messages cannot recover missing node metadata. Unavailable
+nodes are explicitly marked instead of being invented.
 
 Group commands work in groups where you're an admin. You'll also find **`@admin`**, which
 mentions every admin of a group at once, and **Raw quality**, which sends JPEG and PNG
@@ -199,6 +203,7 @@ photos exactly as they are.
 - 🔔 System notifications, with Reply and Mark as read on Windows
 - 📝 Drafts that stay with each chat, @mentions, and a formatting toolbar (bold, italic, strikethrough, code)
 - 🎙️ Voice messages and videos played by the system's own decoders (no bundled codecs)
+- 🎤 Record voice notes in a chat: click the microphone, then Send or Delete. Microphone recording needs a recent FFmpeg with the `libopus` encoder available on the computer (on Windows, PATH or WinGet). WaGo shows an error if no compatible encoder or microphone is found. Recordings are sent as WhatsApp Ogg/Opus voice messages, encoded once at 48 kHz and high-quality 96 kbit/s VBR; Opus is lossy, so bit-perfect recording is not possible in the voice-note format.
 - 📌 Pinned, archived and muted chats, Favourites and custom lists, disappearing messages, chat themes
 - 📊 Polls with Hide voter names and an end time when you create one
 - 🔗 Link previews, sent and received, with WhatsApp's big picture; group invite links, albums and documents

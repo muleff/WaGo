@@ -77,13 +77,14 @@ func runCatch(c *Context) error {
 	if c.Reply == nil {
 		return errors.New("Reply to a message, then use /catch.")
 	}
+	adn := c.Text("adn") == "--adn"
 	if c.Reply.Kind == model.KindUnsupported {
 		// just send the user a warning that catching the message may not work
 		note := c.note()
 		note.Text = c.Locale.Text("commands.kind.warning")
-		note.Buttons = []Button{{Label: c.Locale.Text("ui.continue"), Run: func() { c.Do(func() func() { return func() { c.ShowPayload(c.Reply.ChatID, c.Reply.ID) } }) }}}
+		note.Buttons = []Button{{Label: c.Locale.Text("ui.continue"), Run: func() { c.Do(func() func() { return func() { c.ShowPayload(c.Reply.ChatID, c.Reply.ID, adn) } }) }}}
 		return nil
 	}
-	c.ShowPayload(c.Reply.ChatID, c.Reply.ID)
+	c.ShowPayload(c.Reply.ChatID, c.Reply.ID, adn)
 	return nil
 }

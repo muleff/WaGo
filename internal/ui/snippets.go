@@ -238,10 +238,11 @@ func (u *UI) snippetVarsNote() string {
 
 // snippetDialog is /catch's payload of a message.
 type snippetDialog struct {
-	chat, id      string
-	loading, busy bool
-	message       string
-	body          widget.Editor
+	chat, id        string
+	additionalNodes bool
+	loading, busy   bool
+	message         string
+	body            widget.Editor
 }
 
 // snippetFixtures are the snippets cmd/screenshot shows.
@@ -346,13 +347,19 @@ func (u *UI) snippetTyped(v string) bool {
 	return false
 }
 
-func (u *UI) openPayload(chat, id string) {
-	d := &snippetDialog{chat: chat, id: id, loading: true}
+func (u *UI) openPayload(chat, id string, additionalNodes bool) {
+	d := &snippetDialog{chat: chat, id: id, additionalNodes: additionalNodes, loading: true}
 	d.body.ReadOnly = true
 	u.dialog = dialogState{kind: dialogPayload, snippet: d}
 	b := u.backend
 	u.slashDo(func() func() {
-		body, err := b.MessagePayload(chat, id)
+		var body string
+		var err error
+		if additionalNodes {
+			body, err = b.MessagePayloadWithAdditionalNodes(chat, id)
+		} else {
+			body, err = b.MessagePayload(chat, id)
+		}
 		return func() {
 			if u.dialog.snippet != d {
 				return
@@ -391,6 +398,10 @@ func (u *UI) snippetPanel(gtx C) D {
 	if d == nil {
 		return D{}
 	}
+	title := "Message payload"
+	if d.additionalNodes {
+		title += " + additionalNodes"
+	}
 	active := u.dialog.isOpen()
 	if active && u.btn("snip:close").Clicked(gtx) {
 		u.closeDialog()
@@ -404,7 +415,13 @@ func (u *UI) snippetPanel(gtx C) D {
 			d.busy = true
 			b := u.backend
 			u.slashDo(func() func() {
-				path, err := b.ExportMessagePayload(d.chat, d.id)
+				var path string
+				var err error
+				if d.additionalNodes {
+					path, err = b.ExportMessagePayloadWithAdditionalNodes(d.chat, d.id)
+				} else {
+					path, err = b.ExportMessagePayload(d.chat, d.id)
+				}
 				return func() {
 					if u.dialog.snippet != d {
 						return
@@ -426,7 +443,7 @@ func (u *UI) snippetPanel(gtx C) D {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx C) D {
 				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-					layout.Flexed(1, u.label(19, "Message payload", u.pal.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+					layout.Flexed(1, u.label(19, title, u.pal.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
 					layout.Rigid(func(gtx C) D { return u.iconButton(gtx, u.btn("snip:close"), icClose, 36, 22, u.pal.Icon) }))
 			}),
 			layout.Rigid(layout.Spacer{Height: 12}.Layout),

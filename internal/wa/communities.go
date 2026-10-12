@@ -54,8 +54,8 @@ func (b *Backend) Communities() []*model.Community {
 	rows, err := b.db.QueryContext(ctx, `
 		SELECT p.jid, p.name, g.jid, g.announce_sub,
 			MAX(g.last_ts, COALESCE((SELECT MAX(ts) FROM wz_messages WHERE chat = g.jid), 0)) AS act
-		FROM wz_chats p JOIN wz_chats g ON g.parent = p.jid
-		WHERE p.community = 1
+			FROM wz_chats p JOIN wz_chats g ON g.parent = p.jid
+			WHERE p.community = 1 AND p.exited = 0 AND g.exited = 0
 		ORDER BY act DESC`)
 	if err != nil {
 		b.log.Errorf("load communities: %v", err)
@@ -145,6 +145,46 @@ func (s *msgStore) updateMembers(ctx context.Context, chat string, join, leave [
 // clearMembers forgets a group's participants, once you left it.
 func (s *msgStore) clearMembers(ctx context.Context, chat string) {
 	_, _ = s.db.ExecContext(ctx, `DELETE FROM wz_members WHERE chat = ?`, chat)
+}
+
+// setGroupExited records a confirmed exit. The chat and its messages stay
+// available so the user can still delete its history afterwards.
+func (s *msgStore) setGroupExited(ctx context.Context, chat string, exited bool) error {
+	_, err := s.db.ExecContext(ctx, `UPDATE wz_chats SET exited = ? WHERE jid = ? AND is_group = 1`,
+		boolInt(exited), chat)
+	return err
+}
+
+// syncJoinedGroups uses WhatsApp's successful joined-groups response to
+// reconcile exits that happened on the phone while this client was offline.
+// It does not remove chats or history: exited chats can still be deleted.
+func (s *msgStore) syncJoinedGroups(ctx context.Context, joined []string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if len(joined) == 0 {
+		if _, err := tx.ExecContext(ctx, `UPDATE wz_chats SET exited = 1 WHERE is_group = 1`); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM wz_members`); err != nil {
+			return err
+		}
+	} else {
+		args := make([]any, len(joined))
+		for i, jid := range joined {
+			args[i] = jid
+		}
+		in := placeholders(len(joined))
+		if _, err := tx.ExecContext(ctx, `UPDATE wz_chats SET exited = (jid NOT IN (`+in+`)) WHERE is_group = 1`, args...); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM wz_members WHERE chat NOT IN (`+in+`)`, args...); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }
 
 // keepMembers forgets the participants of every group but the joined ones,
