@@ -297,16 +297,28 @@ func (b *Backend) pair() {
 }
 
 func (b *Backend) RequestPairingCode(phoneNumber string) (string, error) {
-	ctx := b.ctx
-	if cli := b.client(); cli != nil {
-		code, err := cli.PairPhone(ctx, phoneNumber, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
-		if err != nil {
-			return "", fmt.Errorf("pair phone: %w", err)
+	// Starting the QR channel and the websocket is asynchronous. On a phone
+	// the user can press Next before Connect has finished, so PairPhone used
+	// to fail with "websocket is not connected" even on a working network.
+	ctx, cancel := context.WithTimeout(b.ctx, 15*time.Second)
+	defer cancel()
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		cli := b.client()
+		if cli != nil && cli.IsConnected() {
+			code, err := cli.PairPhone(ctx, phoneNumber, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
+			if err != nil {
+				return "", fmt.Errorf("pair phone: %w", err)
+			}
+			return code, nil
 		}
-		return code, nil
-
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("WhatsApp connection is not ready; check internet access and use Retry: %w", ctx.Err())
+		case <-tick.C:
+		}
 	}
-	return "", nil
 }
 
 // startPair stops the previous pair, if any, and connects a new client for

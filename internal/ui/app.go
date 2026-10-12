@@ -119,12 +119,14 @@ type UI struct {
 	login struct {
 		retry      widget.Clickable
 		switchAcct widget.Clickable
+		pairing    chan phonePairResult // async linking; never block Android's event loop
 		qrData     string
 		qr         *qr.Code
 		// history is model.PrefHistorySync ("" until read), and recent
 		// the last number of days picked, for the "Recent messages" row.
 		history, recent string
 	}
+	mobileLoginList widget.List
 
 	// accounts lists the linked accounts, from the host; nil when there
 	// is only one backend.
@@ -367,6 +369,7 @@ func New(b model.Backend) *UI {
 	u.settings.search.SingleLine = true
 	u.sidebar.search.SingleLine = true
 	u.sidebar.list.Axis = layout.Vertical
+	u.mobileLoginList.Axis = layout.Vertical
 	u.sidebar.rows = make(map[string]*widget.Clickable)
 	u.conv.list.Axis = layout.Vertical
 	u.conv.list.ScrollToEnd = true

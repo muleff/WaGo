@@ -13,19 +13,23 @@ import (
 
 func (u *UI) layoutMobileLogin(gtx C) D {
 	p := u.pal
-	return layout.Center.Layout(gtx, func(gtx C) D {
-		gtx.Constraints.Max.X = min(max(0, gtx.Constraints.Max.X-gtx.Dp(40)), gtx.Dp(480))
-		return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
-			layout.Rigid(u.layoutMobileLoginCard),
-			layout.Rigid(layout.Spacer{Height: 28}.Layout),
-			layout.Rigid(func(gtx C) D {
-				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-					layout.Rigid(func(gtx C) D { return drawIcon(gtx, icLock, 14, p.TextSecondary) }),
-					layout.Rigid(layout.Spacer{Width: 5}.Layout),
-					layout.Rigid(u.label(13, u.locale.Text("PolicyE2E"), p.TextSecondary).Layout),
-				)
-			}),
-		)
+	// Android's keyboard can reduce the usable height below the card's
+	// natural height. A scrollable form keeps Next and the code reachable.
+	return u.mobileLoginList.Layout(gtx, 1, func(gtx C, _ int) D {
+		return layout.Inset{Left: 20, Right: 20, Top: 20, Bottom: 20}.Layout(gtx, func(gtx C) D {
+			gtx.Constraints.Max.X = min(gtx.Constraints.Max.X, gtx.Dp(480))
+			return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
+				layout.Rigid(u.layoutMobileLoginCard),
+				layout.Rigid(layout.Spacer{Height: 16}.Layout),
+				layout.Rigid(func(gtx C) D {
+					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+						layout.Rigid(func(gtx C) D { return drawIcon(gtx, icLock, 14, p.TextSecondary) }),
+						layout.Rigid(layout.Spacer{Width: 5}.Layout),
+						layout.Rigid(u.label(13, u.locale.Text("PolicyE2E"), p.TextSecondary).Layout),
+					)
+				}),
+			)
+		})
 	})
 }
 
@@ -323,9 +327,13 @@ func (u *UI) layoutCountryCode(gtx C) D {
 
 func (u *UI) layoutPairingButton(gtx C) D {
 	country, number := u.countryCode.Text(), u.phoneNumber.Text()
-	disabled := len(country) < 1 || len(country) > 3 || len(number) < 7 || len(country)+len(number) > 15
+	disabled := u.login.pairing != nil || len(country) < 1 || len(country) > 3 || len(number) < 7 || len(country)+len(number) > 15
+	label := "Next"
+	if u.login.pairing != nil {
+		label = "Connecting..."
+	}
 	return u.dialogButton(gtx, "login:pair", dialogButton{
-		label:    "Next",
+		label:    label,
 		primary:  true,
 		disabled: disabled,
 	})

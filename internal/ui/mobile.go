@@ -13,14 +13,24 @@ import (
 // have enough width for the desktop rail, chat list and conversation panes.
 func (u *UI) layoutMobileMain(gtx C) D {
 	sz := gtx.Constraints.Max
-	navH := gtx.Dp(64)
+	// Conversations have their own Back action in the header. Give the
+	// message list and composer the entire viewport, especially with the
+	// on-screen keyboard open.
+	inChat := u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings
+	navH := 0
+	if !inChat {
+		navH = min(sz.Y, gtx.Dp(64))
+	}
 	content := gtx
-	content.Constraints = layout.Exact(image.Pt(sz.X, sz.Y-navH))
+	content.Constraints = layout.Exact(image.Pt(max(0, sz.X), max(0, sz.Y-navH)))
 	fillRect(content, image.Rectangle{Max: content.Constraints.Max}, u.pal.Panel)
-	if u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings {
+	if inChat {
 		u.layoutRightPane(content)
 	} else {
 		u.layoutPageSidebar(content)
+	}
+	if navH == 0 {
+		return D{Size: sz}
 	}
 	nav := gtx
 	nav.Constraints = layout.Exact(image.Pt(sz.X, navH))

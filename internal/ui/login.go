@@ -30,7 +30,41 @@ var historyChoices = []struct{ val, name string }{
 	{"365", "1 year"},
 }
 
+type phonePairResult struct {
+	code string
+	err  error
+}
+
+func (u *UI) requestPhonePairCode(number string) {
+	if u.login.pairing != nil {
+		return
+	}
+	results := make(chan phonePairResult, 1)
+	u.login.pairing = results
+	backend, notify := u.backend, u.images.invalidate
+	go func() {
+		code, err := backend.RequestPairingCode(number)
+		results <- phonePairResult{code: code, err: err}
+		if notify != nil {
+			notify()
+		}
+	}()
+}
+
 func (u *UI) updateLogin(gtx C) {
+	if results := u.login.pairing; results != nil {
+		select {
+		case result := <-results:
+			u.login.pairing = nil
+			if result.err != nil {
+				u.toast("Couldn't link WhatsApp: " + result.err.Error())
+			} else {
+				u.verifyCode.SetText(result.code)
+				u.beginMobileLoginTransition(true)
+			}
+		default:
+		}
+	}
 	if !u.mobile && !u.phonePairing && u.conn.State == model.StateQR && u.btn("login:mobile-pair").Clicked(gtx) {
 		u.phonePairing = true
 	}
@@ -55,13 +89,7 @@ func (u *UI) updateLogin(gtx C) {
 				} else {
 					PhoneNumber = country + number
 				}
-				u.toast("Sending verification code... to +" + PhoneNumber)
-				code, err := u.backend.RequestPairingCode(PhoneNumber)
-				if err != nil {
-					u.toast("Error sending verification code: " + err.Error())
-					return
-				}
-				u.verifyCode.SetText(code)
+				u.requestPhonePairCode(PhoneNumber)
 			}
 		} else if u.btn("login:pair").Clicked(gtx) {
 			country, number := u.countryCode.Text(), u.phoneNumber.Text()
@@ -76,25 +104,7 @@ func (u *UI) updateLogin(gtx C) {
 				if u.mobile {
 					u.setHistory(u.recentHistory())
 				}
-				u.toast("Sending verification code... to +" + PhoneNumber)
-				code, err := u.backend.RequestPairingCode(PhoneNumber)
-				if err != nil {
-					u.toast("Error sending verification code: " + err.Error())
-					return
-				}
-				u.beginMobileLoginTransition(true)
-				u.verifyCode.SetText(code)
-				if u.conn.State == model.StateError && u.conn.Err != "" {
-					u.toast("Error: " + u.conn.Err)
-				}
-				switch u.conn.State {
-				case model.StateQR, model.StateStarting:
-					u.toast("Verification code sent to +" + PhoneNumber)
-				case model.StateQRExpired, model.StateError:
-					u.toast("Verification code expired or error occurred. Please try again.")
-				default:
-					u.toast("Verification code expired or error occurred. Please try again.")
-				}
+				u.requestPhonePairCode(PhoneNumber)
 			}
 		}
 	}
