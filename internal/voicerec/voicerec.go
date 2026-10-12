@@ -17,7 +17,10 @@ import (
 	"time"
 )
 
-var ErrNoMicrophone = errors.New("no microphone was found")
+var (
+	ErrNoMicrophone     = errors.New("no microphone was found")
+	ErrMicrophoneAccess = errors.New("microphone access was denied")
+)
 
 type Recorder struct {
 	path   string
@@ -116,7 +119,17 @@ func findFFmpeg(ctx context.Context) (string, error) {
 		out, err := exec.CommandContext(check, bin, "-hide_banner", "-encoders").CombinedOutput()
 		cancel()
 		if err == nil && bytes.Contains(out, []byte("libopus")) {
-			return bin, nil
+			if runtime.GOOS != "windows" {
+				return bin, nil
+			}
+			// A usable encoder does not imply that this build can capture
+			// DirectShow devices. Check the input driver before selecting it.
+			check, stop := context.WithTimeout(ctx, 4*time.Second)
+			devices, deviceErr := exec.CommandContext(check, bin, "-hide_banner", "-devices").CombinedOutput()
+			stop()
+			if deviceErr == nil && supportsDirectShow(devices) {
+				return bin, nil
+			}
 		}
 		if err := ctx.Err(); err != nil {
 			return "", err
@@ -140,6 +153,9 @@ func (r *Recorder) Error() error {
 		msg = msg[len(msg)-500:]
 	}
 	if msg != "" {
+		if microphoneAccessDenied(msg) {
+			return fmt.Errorf("%w: %s", ErrMicrophoneAccess, msg)
+		}
 		return fmt.Errorf("microphone capture failed: %s", msg)
 	}
 	return fmt.Errorf("microphone capture failed: %w", r.err)
@@ -194,17 +210,33 @@ func (r *Recorder) Abort() {
 func inputArgs(ctx context.Context, bin string) ([]string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		// DShow uses the device's display name, not a universal "default" alias.
-		cmd := exec.CommandContext(ctx, bin, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
-		out, _ := cmd.CombinedOutput() // enumeration exits nonzero by design
-		devices := windowsAudioDevices(string(out))
+		// Enumeration intentionally exits nonzero. Recent FFmpeg versions
+		// identify each device with '(audio)' rather than a DirectShow heading.
+		check, cancel := context.WithTimeout(ctx, 8*time.Second)
+		cmd := exec.CommandContext(check, bin, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
+		out, cmdErr := cmd.CombinedOutput()
+		checkErr := check.Err()
+		cancel()
+		devices := parseWindowsAudioDevices(string(out))
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
+		if checkErr != nil {
+			return nil, fmt.Errorf("microphone discovery timed out: %w", checkErr)
+		}
 		if len(devices) == 0 {
+			if microphoneAccessDenied(string(out)) {
+				return nil, ErrMicrophoneAccess
+			}
+			if !isDeviceEnumerationOutput(string(out)) {
+				if cmdErr != nil {
+					return nil, fmt.Errorf("could not enumerate microphones: %w: %s", cmdErr, tailLog(string(out)))
+				}
+				return nil, fmt.Errorf("could not enumerate microphones: %s", tailLog(string(out)))
+			}
 			return nil, ErrNoMicrophone
 		}
-		return []string{"-f", "dshow", "-i", "audio=" + devices[0]}, nil
+		return windowsCaptureArgs(devices[0]), nil
 	case "darwin":
 		return []string{"-f", "avfoundation", "-i", ":0"}, nil
 	case "linux":
@@ -214,28 +246,122 @@ func inputArgs(ctx context.Context, bin string) ([]string, error) {
 	}
 }
 
-// windowsAudioDevices reads the quoted names in FFmpeg's DirectShow audio
-// section, skipping the alternate device identifiers and all video devices.
-func windowsAudioDevices(output string) []string {
-	var names []string
-	audio := false
+type windowsAudioDevice struct {
+	name        string
+	alternative string
+}
+
+func windowsCaptureArgs(device windowsAudioDevice) []string {
+	name := device.name
+	if device.alternative != "" {
+		name = device.alternative
+	}
+	return []string{"-f", "dshow", "-i", "audio=" + name}
+}
+
+// parseWindowsAudioDevices accepts both FFmpeg's older DirectShow section
+// format and the format introduced in recent builds, which identifies each
+// device inline as '(audio)', '(video)', or '(none)'.
+func parseWindowsAudioDevices(output string) []windowsAudioDevice {
+	var devices []windowsAudioDevice
+	legacyAudio := false
+	lastAudio := -1
 	for _, line := range strings.Split(output, "\n") {
+		if end := strings.IndexByte(line, ']'); end >= 0 {
+			line = line[end+1:]
+		}
+		line = strings.TrimSpace(line)
 		switch {
-		case strings.Contains(line, "DirectShow audio devices"):
-			audio = true
+		case strings.HasPrefix(line, "DirectShow audio devices"):
+			legacyAudio, lastAudio = true, -1
 			continue
-		case strings.Contains(line, "DirectShow video devices"):
-			audio = false
+		case strings.HasPrefix(line, "DirectShow video devices"):
+			legacyAudio, lastAudio = false, -1
+			continue
+		case strings.HasPrefix(line, "Alternative name"):
+			if lastAudio >= 0 {
+				if name, ok := quotedDeviceName(line); ok {
+					devices[lastAudio].alternative = name
+				}
+			}
 			continue
 		}
-		if !audio || strings.Contains(line, "Alternative name") {
+		name, ok := quotedDeviceName(line)
+		if !ok {
+			lastAudio = -1
 			continue
 		}
-		start := strings.IndexByte(line, '"')
+		// FFmpeg 9+ prints '"Microphone" (audio)', without headings.
+		// An explicit type wins over a previously seen legacy section.
 		end := strings.LastIndexByte(line, '"')
-		if start >= 0 && end > start {
-			names = append(names, line[start+1:end])
+		suffix := strings.TrimSpace(line[end+1:])
+		if suffix != "" {
+			lastAudio = -1
+			if suffix != "(audio)" {
+				continue
+			}
+		} else if !legacyAudio {
+			lastAudio = -1
+			continue
 		}
+		devices = append(devices, windowsAudioDevice{name: name})
+		lastAudio = len(devices) - 1
+	}
+	return devices
+}
+
+func quotedDeviceName(line string) (string, bool) {
+	start := strings.IndexByte(line, '"')
+	end := strings.LastIndexByte(line, '"')
+	if start < 0 || end <= start {
+		return "", false
+	}
+	return line[start+1 : end], true
+}
+
+// windowsAudioDevices retains the friendly names for status/tests. Capture
+// uses the alternative ID when present, so duplicate or localized names work.
+func windowsAudioDevices(output string) []string {
+	devices := parseWindowsAudioDevices(output)
+	names := make([]string, 0, len(devices))
+	for _, device := range devices {
+		names = append(names, device.name)
 	}
 	return names
+}
+
+func supportsDirectShow(output []byte) bool {
+	for _, line := range strings.Split(string(output), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && strings.Contains(fields[0], "D") && fields[1] == "dshow" {
+			return true
+		}
+	}
+	return false
+}
+
+func isDeviceEnumerationOutput(output string) bool {
+	return strings.Contains(output, "DirectShow audio devices") ||
+		strings.Contains(output, "DirectShow video devices") ||
+		strings.Contains(output, " (audio)") ||
+		strings.Contains(output, " (video)") ||
+		strings.Contains(output, " (none)") ||
+		strings.Contains(output, "Error opening input file dummy.") ||
+		strings.Contains(strings.ToLower(output), "no devices found")
+}
+
+func microphoneAccessDenied(output string) bool {
+	output = strings.ToLower(output)
+	return strings.Contains(output, "permission denied") ||
+		strings.Contains(output, "access is denied") ||
+		strings.Contains(output, "access denied") ||
+		strings.Contains(output, "0x80070005")
+}
+
+func tailLog(output string) string {
+	output = strings.TrimSpace(output)
+	if len(output) > 350 {
+		output = output[len(output)-350:]
+	}
+	return output
 }

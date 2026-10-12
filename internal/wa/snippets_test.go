@@ -173,6 +173,118 @@ func TestCatchRawNodeHandlerPreservesActualStanzaNodes(t *testing.T) {
 	}
 }
 
+func TestCatchAdditionalNodesAvailableWhenMessageEventEmits(t *testing.T) {
+	b := testBackend(t)
+	const id = "event-metadata-order"
+	b.onRawCatchNode(b.ctx, &waBinary.Node{
+		Tag: "message", Attrs: waBinary.Attrs{"id": id, "from": types.NewJID("123", types.GroupServer)},
+		Content: []waBinary.Node{{Tag: "meta", Attrs: waBinary.Attrs{"is_group_status": "false"}}},
+	})
+	var observed bool
+	b.mu.Lock()
+	b.notify = func() {
+		if observed {
+			return
+		}
+		for _, event := range b.events {
+			if message, ok := event.(model.MessageEvent); ok && message.Msg.ID == id {
+				observed = true
+				payload, err := b.MessagePayloadWithAdditionalNodes("123@g.us", id)
+				if err != nil || !strings.Contains(payload, `"additionalNodesAvailable": true`) {
+					t.Errorf("message event before metadata saved: %s, %v", payload, err)
+				}
+				return
+			}
+		}
+	}
+	b.mu.Unlock()
+	b.onMessage(snippetEvent(id, &waE2E.Message{Conversation: proto.String("hello")}))
+	if !observed {
+		t.Fatal("no message event delivered")
+	}
+}
+
+func TestCatchProvidedAdditionalNodesAvailableWhenMessageEventEmits(t *testing.T) {
+	b := testBackend(t)
+	const id = "provided-metadata-order"
+	var observed bool
+	b.mu.Lock()
+	b.notify = func() {
+		if observed {
+			return
+		}
+		for _, event := range b.events {
+			if message, ok := event.(model.MessageEvent); ok && message.Msg.ID == id {
+				observed = true
+				payload, err := b.MessagePayloadWithAdditionalNodes("123@g.us", id)
+				if err != nil || !strings.Contains(payload, `"additionalNodesAvailable": true`) {
+					t.Errorf("provided metadata arrived after the message event: %s, %v", payload, err)
+				}
+				return
+			}
+		}
+	}
+	b.mu.Unlock()
+	b.onMessageWithAdditionalNodes(snippetEvent(id, &waE2E.Message{Conversation: proto.String("hello")}), []waBinary.Node{{Tag: "meta", Attrs: waBinary.Attrs{"source": "provided"}}})
+	if !observed {
+		t.Fatal("no message event delivered")
+	}
+}
+
+func TestCatchAdditionalNodesForOwnDirectMessagesWithSameID(t *testing.T) {
+	b := testBackend(t)
+	const id = "same-id-across-chats"
+	from := types.NewJID("999", types.HiddenUserServer)
+	b.useDevice(&store.Device{ID: &from, LID: from})
+	for _, chat := range []string{"111", "222"} {
+		b.onRawCatchNode(b.ctx, &waBinary.Node{
+			Tag: "message", Attrs: waBinary.Attrs{"id": id, "from": from, "recipient": types.NewJID(chat, types.HiddenUserServer)},
+			Content: []waBinary.Node{{Tag: "meta", Attrs: waBinary.Attrs{"marker": chat}}},
+		})
+	}
+	for _, chat := range []string{"111", "222"} {
+		b.cli = nil // The event's parsed chat is supplied by the offline fixture.
+		e := &events.Message{Info: types.MessageInfo{
+			MessageSource: types.MessageSource{Chat: types.NewJID(chat, types.HiddenUserServer), Sender: from, IsFromMe: true},
+			ID:            id, Timestamp: time.Unix(1700000000, 0)},
+			Message: &waE2E.Message{Conversation: proto.String("hello")},
+		}
+		e.RawMessage = e.Message
+		b.onMessage(e)
+		payload, err := b.MessagePayloadWithAdditionalNodes(chat+"@lid", id)
+		if err != nil || !strings.Contains(payload, `"marker": "`+chat+`"`) {
+			t.Errorf("wrong nodes for %s: %s, %v", chat, payload, err)
+		}
+	}
+}
+
+func TestCatchNeverStoresNestedTransportSecrets(t *testing.T) {
+	b := testBackend(t)
+	const id = "nested-secrets"
+	b.onRawCatchNode(b.ctx, &waBinary.Node{
+		Tag: "message", Attrs: waBinary.Attrs{"id": id, "from": types.NewJID("123", types.GroupServer)},
+		Content: []waBinary.Node{{Tag: "meta", Attrs: waBinary.Attrs{"safe": "yes", "token": "private-token", "key": "private-key"}, Content: []waBinary.Node{
+			{Tag: "label", Attrs: waBinary.Attrs{"source": "safe"}},
+			{Tag: "enc", Content: []byte("private-ciphertext")},
+		}}},
+	})
+	b.onMessage(snippetEvent(id, &waE2E.Message{Conversation: proto.String("hello")}))
+	payload, err := b.MessagePayloadWithAdditionalNodes("123@g.us", id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{`"additionalNodesAvailable": true`, `"safe": "yes"`, `"Tag": "label"`} {
+		if !strings.Contains(payload, want) {
+			t.Errorf("missing allowed metadata %q: %s", want, payload)
+		}
+	}
+	for _, secret := range []string{"private-token", "private-key", "private-ciphertext", `"Tag": "enc"`} {
+		if strings.Contains(payload, secret) {
+			t.Errorf("captured unsafe metadata %q: %s", secret, payload)
+		}
+	}
+}
+
 func TestCatchRawNodePendingBounded(t *testing.T) {
 	b := testBackend(t)
 	for i := 0; i < catchNodeMaxPending+20; i++ {

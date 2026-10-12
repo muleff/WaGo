@@ -119,33 +119,15 @@ func (b *Backend) ExportMessagePayloadWithAdditionalNodes(chat, id string) (stri
 	return saveDownload("Message payload + additionalNodes.json", []byte(text))
 }
 
-// captureAdditionalNodes persists binary stanza nodes only when the caller
-// has obtained the actual nodes. JSON preserves nested nodes and binary data.
-func (s *msgStore) captureAdditionalNodes(ctx context.Context, chat, id string, nodes []waBinary.Node) error {
-	if nodes == nil {
-		return nil
-	}
-	data, err := json.Marshal(nodes)
-	if err != nil {
-		return err
-	}
-	_, err = s.db.ExecContext(ctx, `UPDATE wz_messages SET additional_nodes = COALESCE(additional_nodes, ?)
-		WHERE chat = ? AND id = ? AND kind != ?`, data, chat, id, int(model.KindDeleted))
-	return err
-}
-
 // onMessageWithAdditionalNodes is for event transports that provide the raw
 // stanza nodes alongside a decoded message; hypermeow's events.Message alone
 // doesn't contain them, so ordinary events continue through onMessage.
 func (b *Backend) onMessageWithAdditionalNodes(e *events.Message, nodes []waBinary.Node) {
-	b.onMessage(e)
-	if nodes == nil {
-		return
+	data, err := marshalCatchNodes(nodes)
+	if err != nil {
+		b.log.Warnf("additionalNodes for %s: %v", e.Info.ID, err)
 	}
-	chat := b.canonical(b.ctx, e.Info.Chat).String()
-	if err := b.store.captureAdditionalNodes(b.ctx, chat, e.Info.ID, nodes); err != nil {
-		b.log.Warnf("additionalNodes %s in %s: %v", e.Info.ID, chat, err)
-	}
+	b.onMessageWithNodes(e, data)
 }
 
 func (b *Backend) Snippets() ([]model.Snippet, error) {

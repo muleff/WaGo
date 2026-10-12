@@ -990,6 +990,10 @@ func (b *Backend) resyncAppStateOnce() {
 }
 
 func (b *Backend) onMessage(e *events.Message) {
+	b.onMessageWithNodes(e, nil)
+}
+
+func (b *Backend) onMessageWithNodes(e *events.Message, suppliedNodes []byte) {
 	ctx := b.ctx
 	if isStatus(e.Info.Chat) || isGroupStatus(e) || b.isGroupStatusRevoke(e) {
 		b.onStatus(e)
@@ -999,8 +1003,16 @@ func (b *Backend) onMessage(e *events.Message) {
 	if !ok {
 		return
 	}
+	// Insert the correlated stanza metadata with the message itself. apply
+	// emits UI notifications immediately after storing the message; a later
+	// UPDATE would let /catch read it before additional_nodes was populated.
+	if p.target == "" && !p.edited && !p.revoke && p.pin == 0 && p.vote == nil && p.event == nil {
+		p.msg.additionalNodes = b.popCatchNodes(p.msg.ChatID, e.Info.ID)
+		if suppliedNodes != nil {
+			p.msg.additionalNodes = suppliedNodes
+		}
+	}
 	b.apply(&e.Info, p)
-	b.saveCatchNodes(e)
 }
 
 // onUndecryptable stores a view once message: WhatsApp sends those only to
