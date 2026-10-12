@@ -42,6 +42,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#Exe}"; DestDir: "{app}"; DestName: "OpenWA.exe"; Flags: ignoreversion
+Source: "..\bin\dist\ffmpeg.exe"; DestDir: "{app}"; DestName: "ffmpeg.exe"; Flags: ignoreversion
+Source: "..\bin\dist\ffmpeg-LICENSE.txt"; DestDir: "{app}"; DestName: "ffmpeg-LICENSE.txt"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\OpenWA"; Filename: "{app}\OpenWA.exe"; AppUserModelID: "OpenWA.Desktop"

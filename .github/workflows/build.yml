@@ -127,6 +127,38 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Package FFmpeg for Windows voice notes
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'ffmpeg-essentials.zip'
+          $url = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+          Invoke-WebRequest -Uri $url -OutFile $archive
+          $checksum = (Invoke-RestMethod -Uri "$url.sha256" -TimeoutSec 30).Trim().Split(' ')[0].ToLowerInvariant()
+          $actual = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $checksum) { throw 'FFmpeg archive checksum mismatch' }
+          $extracted = Join-Path $env:RUNNER_TEMP 'ffmpeg-essentials'
+          Expand-Archive -Path $archive -DestinationPath $extracted
+          $binary = Get-ChildItem -Path $extracted -Filter 'ffmpeg.exe' -Recurse -File | Select-Object -First 1
+          $license = Get-ChildItem -Path $extracted -Filter 'LICENSE*' -Recurse -File | Select-Object -First 1
+          if (-not $binary -or -not $license) { throw 'FFmpeg binary or license missing from archive' }
+          Copy-Item $binary.FullName 'bin/dist/ffmpeg.exe'
+          Copy-Item $license.FullName 'bin/dist/ffmpeg-LICENSE.txt'
+          $encoders = & '.\bin\dist\ffmpeg.exe' -hide_banner -encoders
+          $devices = & '.\bin\dist\ffmpeg.exe' -hide_banner -devices
+          if (($encoders | Out-String) -notmatch 'libopus') { throw 'FFmpeg is missing libopus' }
+          if (($devices | Out-String) -notmatch 'dshow') { throw 'FFmpeg is missing DirectShow' }
+          Compress-Archive -Path 'bin/dist/OpenWA-windows-amd64.exe','bin/dist/ffmpeg.exe','bin/dist/ffmpeg-LICENSE.txt' -DestinationPath 'bin/dist/OpenWA-windows-portable.zip'
+
+      - name: Upload Windows portable package
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v7
+        with:
+          path: bin/dist/OpenWA-windows-portable.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Build Windows installer
         if: runner.os == 'Windows'
         shell: pwsh
@@ -288,6 +320,8 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose bin/dist/OpenWA-android.apk
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging bin/dist/OpenWA-android.apk |
             grep "package: name='com.muleff.wago'"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
+            grep -q 'android.permission.INTERNET'
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7
@@ -334,6 +368,12 @@ jobs:
           name: OpenWA-Setup.exe
           path: dist
 
+      - name: Download Windows portable package
+        uses: actions/download-artifact@v8
+        with:
+          name: OpenWA-windows-portable.zip
+          path: dist
+
       - name: Download Linux build
         uses: actions/download-artifact@v8
         with:
@@ -355,6 +395,7 @@ jobs:
         run: |
           sha256sum \
             OpenWA-windows-amd64.exe \
+            OpenWA-windows-portable.zip \
             OpenWA-Setup.exe \
             OpenWA-linux-amd64 \
             OpenWA-android.apk \
@@ -397,6 +438,7 @@ jobs:
 
             gh release upload "$RELEASE_TAG" \
               dist/OpenWA-windows-amd64.exe \
+              dist/OpenWA-windows-portable.zip \
               dist/OpenWA-Setup.exe \
               dist/OpenWA-linux-amd64 \
               dist/OpenWA-android.apk \
@@ -408,6 +450,7 @@ jobs:
 
             gh release create "$RELEASE_TAG" \
               dist/OpenWA-windows-amd64.exe \
+              dist/OpenWA-windows-portable.zip \
               dist/OpenWA-Setup.exe \
               dist/OpenWA-linux-amd64 \
               dist/OpenWA-android.apk \

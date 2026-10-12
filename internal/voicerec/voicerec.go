@@ -99,6 +99,13 @@ func findFFmpeg(ctx context.Context) (string, error) {
 		name += ".exe"
 	}
 	var candidates []string
+	if runtime.GOOS == "windows" {
+		// The Windows installer and portable ZIP ship a compatible FFmpeg next
+		// to OpenWA.exe. Prefer it over an obsolete FFmpeg elsewhere on PATH.
+		if exe, err := os.Executable(); err == nil {
+			candidates = append(candidates, filepath.Join(filepath.Dir(exe), name))
+		}
+	}
 	for _, dir := range filepath.SplitList(os.Getenv("PATH")) {
 		if dir != "" {
 			candidates = append(candidates, filepath.Join(dir, name))

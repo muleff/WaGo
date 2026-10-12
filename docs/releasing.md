@@ -12,6 +12,7 @@ Versi Go mengikuti `go.mod`. Semua target menerapkan patch go-text
 | --- | --- |
 | `OpenWA-Setup.exe` | Installer Windows (Inno Setup, `installer/wazzap.iss`) |
 | `OpenWA-windows-amd64.exe` | Aplikasi Windows portable, tanpa jendela console; juga file yang diunduh oleh tombol update |
+| `OpenWA-windows-portable.zip` | Aplikasi Windows plus `ffmpeg.exe` untuk perekaman voice note tanpa instalasi FFmpeg terpisah |
 | `OpenWA-linux-amd64` | Executable Linux |
 | `OpenWA-android.apk` | APK Android untuk ARMv7 dan ARM64, minimum Android 5.0 (API 21), aplikasi Gio dengan backend WhatsApp |
 | `SHA256SUMS`, `SHA256SUMS.sig` | Checksum semua file di atas, dan tanda tangan ed25519-nya (hanya di release) |
@@ -56,6 +57,13 @@ lulus belum sama dengan pengujian perangkat Android nyata.
 
 ## Installer Windows
 
+Workflow Windows mengambil FFmpeg Essentials dari Gyan, memverifikasi SHA-256
+arsip resmi, kemudian menyertakan `ffmpeg.exe` dan informasi lisensinya bersama
+OpenWA. Installer dan ZIP portable dapat merekam voice note tanpa instalasi
+FFmpeg di PATH. File `.exe` tunggal masih membutuhkan FFmpeg pada PC atau di
+folder yang sama. FFmpeg didistribusikan dengan lisensinya; sumber proyek:
+https://ffmpeg.org/download.html dan https://www.gyan.dev/ffmpeg/builds/.
+
 Installer memasang aplikasi untuk user yang sedang login saja, ke
 `%LocalAppData%\Programs\WazzapClients`, tanpa meminta hak admin. Installer membuat
 shortcut di Start Menu (opsional di Desktop) dan mendaftarkan uninstaller di
@@ -65,7 +73,8 @@ chat dan sesi WhatsApp (`%AppData%\WazzapClients`) ikut dihapus. Defaultnya tida
 
 Untuk membangunnya secara lokal, pasang [Inno Setup 6](https://jrsoftware.org/isinfo.php),
 build exe ke `bin/dist/OpenWA-windows-amd64.exe`, lalu jalankan
-`iscc /DAppVersion=0.10.0 installer\wazzap.iss`.
+`iscc /DAppVersion=0.10.0 installer\wazzap.iss`. Salin pula `ffmpeg.exe`
+dan `ffmpeg-LICENSE.txt` ke `bin/dist` sebelum kompilasi installer.
 
 ## Update dari dalam aplikasi
 
