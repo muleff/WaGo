@@ -186,12 +186,120 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  android:
+    name: Build (android-arm+arm64)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    env:
+      GOFLAGS: -mod=readonly
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK and NDK
+        run: |
+          sdkmanager --install \
+            'platforms;android-35' \
+            'build-tools;35.0.0' \
+            'ndk;27.2.12479018'
+
+      - name: Apply dependency patches
+        run: sh patches/apply.sh
+
+      - name: Verify dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Install Gio Android packager
+        run: go install gioui.org/cmd/gogio@v0.10.3
+
+      # Optional persistent signature for installing newer APKs over older ones.
+      # Without these secrets gogio generates a temporary development key.
+      - name: Configure Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [[ -n "$ANDROID_KEYSTORE_BASE64" && -n "$ANDROID_KEYSTORE_PASSWORD" ]]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/wago.keystore"
+            echo "ANDROID_SIGN_KEY=$RUNNER_TEMP/wago.keystore" >> "$GITHUB_ENV"
+          elif [[ -n "$ANDROID_KEYSTORE_BASE64" || -n "$ANDROID_KEYSTORE_PASSWORD" ]]; then
+            echo 'Configure both ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD.' >&2
+            exit 1
+          else
+            echo '::warning::Using a temporary Android debug signing key; subsequent APK installs may require uninstalling the old build.'
+          fi
+
+      - name: Build installable Android APK
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          mkdir -p bin/dist
+          app_version='0.1.0'
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            app_version="${GITHUB_REF_NAME#v}"
+          fi
+          if [[ ! "$app_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Android requires a three-component version tag: vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          sign_options=()
+          if [[ -n "${ANDROID_SIGN_KEY:-}" ]]; then
+            sign_options=(-signkey "$ANDROID_SIGN_KEY" -signpass "$ANDROID_KEYSTORE_PASSWORD")
+          fi
+
+          "$(go env GOPATH)/bin/gogio" \
+            -target android \
+            -arch arm,arm64 \
+            -minsdk 21 \
+            -targetsdk 35 \
+            -appid com.muleff.wago \
+            -name WaGo \
+            -version "$app_version.$GITHUB_RUN_NUMBER" \
+            "${sign_options[@]}" \
+            -o bin/dist/OpenWA-android.apk \
+            ./cmd/android
+
+      - name: Verify Android APK
+        run: |
+          test -s bin/dist/OpenWA-android.apk
+          unzip -t bin/dist/OpenWA-android.apk
+          unzip -Z -1 bin/dist/OpenWA-android.apk | grep -q 'lib/armeabi-v7a/libgio.so'
+          unzip -Z -1 bin/dist/OpenWA-android.apk | grep -q 'lib/arm64-v8a/libgio.so'
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose bin/dist/OpenWA-android.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging bin/dist/OpenWA-android.apk |
+            grep "package: name='com.muleff.wago'"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: OpenWA-android.apk
+          path: bin/dist/OpenWA-android.apk
+          archive: false
+          if-no-files-found: error
+          retention-days: 14
+
   release:
     name: Draft release
 
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
 
-    needs: build
+    needs: [build, android]
 
     runs-on: ubuntu-22.04
 
@@ -228,6 +336,12 @@ jobs:
           name: OpenWA-linux-amd64
           path: dist
 
+      - name: Download Android APK
+        uses: actions/download-artifact@v8
+        with:
+          name: OpenWA-android.apk
+          path: dist
+
       - name: Show downloaded files
         run: |
           ls -lah dist
@@ -239,6 +353,7 @@ jobs:
             OpenWA-windows-amd64.exe \
             OpenWA-Setup.exe \
             OpenWA-linux-amd64 \
+            OpenWA-android.apk \
             > SHA256SUMS
 
           sha256sum --check SHA256SUMS
@@ -280,6 +395,7 @@ jobs:
               dist/OpenWA-windows-amd64.exe \
               dist/OpenWA-Setup.exe \
               dist/OpenWA-linux-amd64 \
+              dist/OpenWA-android.apk \
               dist/SHA256SUMS \
               dist/SHA256SUMS.sig \
               --clobber
@@ -290,6 +406,7 @@ jobs:
               dist/OpenWA-windows-amd64.exe \
               dist/OpenWA-Setup.exe \
               dist/OpenWA-linux-amd64 \
+              dist/OpenWA-android.apk \
               dist/SHA256SUMS \
               dist/SHA256SUMS.sig \
               --verify-tag \

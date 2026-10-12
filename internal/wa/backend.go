@@ -49,10 +49,10 @@ type Backend struct {
 	store     msgStore
 	container *sqlstore.Container
 
-	cliMu  sync.Mutex
-	cli    *whatsmeow.Client
+	cliMu      sync.Mutex
+	cli        *whatsmeow.Client
 	catchNodes catchNodeBuffer
-	typing outgoingTyping
+	typing     outgoingTyping
 
 	pairMu     sync.Mutex
 	pairCancel context.CancelFunc // stops the running pair's QR loop
@@ -127,6 +127,7 @@ func Open(dataDir string, debug bool, mobile bool) (*Backend, error) {
 		dataDir:     dataDir,
 		log:         newLogger(logf, debug),
 		logf:        logf,
+		mobile:      mobile,
 		avatars:     newFetcher(),
 		downloads:   newFetcher(),
 		subtitles:   make(map[string]string),

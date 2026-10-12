@@ -1,8 +1,4 @@
-// Command android starts the Android build of OpenWA.
-//
-// This entry point intentionally uses the demo backend for now. It validates
-// the Gio Android lifecycle and the mobile UI without pulling desktop-only
-// concerns into the first Android build.
+// Command android starts OpenWA on Android with the live WhatsApp backend.
 package main
 
 import (
@@ -22,12 +18,18 @@ import (
 func main() {
 	debug.SetGCPercent(50)
 
-	dataDir, err := os.UserConfigDir()
+	// Gio resolves Android's private Context.getFilesDir() directory.
+	// This must be called from main, after Android has initialized Gio.
+	dataDir, err := app.DataDir()
 	if err != nil {
 		log.Fatal(err)
 	}
-	dataDir = filepath.Join(dataDir, "WazzapClients")
+	go run(filepath.Join(dataDir, "WazzapClients"))
+	app.Main()
+}
 
+// run initializes the database off the main thread, which Gio needs for Android.
+func run(dataDir string) {
 	if err := os.MkdirAll(dataDir, 0700); err != nil {
 		log.Fatal(err)
 	}
@@ -51,13 +53,9 @@ func main() {
 		},
 	}
 
-	go func() {
-		if err := ui.Run(backend, options); err != nil {
-			log.Print(err)
-			os.Exit(1)
-		}
-		os.Exit(0)
-	}()
-
-	app.Main()
+	if err := ui.Run(backend, options); err != nil {
+		log.Print(err)
+		os.Exit(1)
+	}
+	os.Exit(0)
 }

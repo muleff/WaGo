@@ -4,7 +4,7 @@ Workflow `.github/workflows/build.yml` berjalan pada setiap push branch, pull
 request, push tag `v*`, dan melalui **Actions > Build and release > Run workflow**.
 Pilihan manual tersedia setelah workflow masuk ke default branch.
 
-Versi Go mengikuti `go.mod`. Kedua target menerapkan patch go-text
+Versi Go mengikuti `go.mod`. Semua target menerapkan patch go-text
 (`patches/apply.sh`), lalu menjalankan pemeriksaan format, `go mod verify`,
 `go vet ./...`, `go test ./...`, dan `go build ./...` sebelum membangun aplikasi:
 
@@ -13,6 +13,7 @@ Versi Go mengikuti `go.mod`. Kedua target menerapkan patch go-text
 | `OpenWA-Setup.exe` | Installer Windows (Inno Setup, `installer/wazzap.iss`) |
 | `OpenWA-windows-amd64.exe` | Aplikasi Windows portable, tanpa jendela console; juga file yang diunduh oleh tombol update |
 | `OpenWA-linux-amd64` | Executable Linux |
+| `OpenWA-android.apk` | APK Android untuk ARMv7 dan ARM64, minimum Android 5.0 (API 21), aplikasi Gio dengan backend WhatsApp |
 | `SHA256SUMS`, `SHA256SUMS.sig` | Checksum semua file di atas, dan tanda tangan ed25519-nya (hanya di release) |
 
 Unduh hasil dari bagian **Artifacts** pada run yang berhasil. Artefak disimpan
@@ -21,8 +22,37 @@ selama 14 hari; aset yang sudah dilampirkan ke GitHub Release tetap tersimpan.
 Linux dibangun di Ubuntu 22.04 dengan CGO serta dukungan X11/Wayland. Paket ini
 bukan binary statis atau AppImage; komputer tujuan memerlukan lingkungan desktop
 dan library runtime Gio (X11/Wayland, xkbcommon, EGL/GLES). Lihat
-[dependensi Linux Gio](https://gioui.org/doc/install/linux). macOS, ARM64, dan
+[dependensi Linux Gio](https://gioui.org/doc/install/linux). macOS, Linux ARM64, dan
 code signing Windows belum disediakan oleh workflow ini.
+
+## APK Android (Gio)
+
+Job `android` menginstal Android SDK 35, Build Tools 35, NDK 27, Java 17, dan
+`gioui.org/cmd/gogio@v0.10.3`. Perintah `gogio` mengemas `./cmd/android`
+sebagai `com.muleff.wago` dengan dua library native (`armeabi-v7a` dan
+`arm64-v8a`); APK diperiksa dengan `unzip`, `apksigner` dan `aapt`.
+Hasil setiap build tersedia dari tab Actions > Artifacts selama 14 hari.
+Build tag `vMAJOR.MINOR.PATCH` menyertakan APK dalam draft release, checksums
+dan tanda tangan checksums seperti executable lain.
+
+APK ditandatangani otomatis menggunakan kunci sementara untuk pengujian.
+Untuk memungkinkan pembaruan tanpa menghapus aplikasi, simpan kedua secret
+repository berikut di **Settings > Secrets and variables > Actions > Secrets**:
+
+- `ANDROID_KEYSTORE_BASE64`: seluruh file keystore Android (JKS/PKCS12) sebagai base64;
+  keystore sebaiknya berisi satu signing key.
+- `ANDROID_KEYSTORE_PASSWORD`: kata sandi keystore yang sama. Jangan commit
+  file keystore atau nilai secret ke repository.
+
+Jika hanya salah satu secret disetel, build Android akan gagal daripada
+menandatangani dengan identitas yang salah. Jika keduanya tidak disetel,
+APK debug tetap dapat dipasang, tetapi tidak selalu bisa memperbarui APK
+sebelumnya karena sertifikat tanda tangannya berubah.
+
+Android menggunakan UI seluler Gio dan backend `wa` yang nyata, bukan demo.
+Namun sejumlah integrasi desktop belum ada di Android, termasuk perekaman
+voice note (saat ini masih bergantung pada FFmpeg di desktop). Build APK yang
+lulus belum sama dengan pengujian perangkat Android nyata.
 
 ## Installer Windows
 
@@ -74,7 +104,7 @@ satu rilis itu secara manual.
    git push origin v0.1.0
    ```
 
-3. Setelah kedua build berhasil, workflow membuat **draft release** dengan semua
+3. Setelah build Windows, Linux, dan Android berhasil, workflow membuat **draft release** dengan semua
    file di atas dan release notes otomatis.
 4. Buka **Releases**, periksa draft, sunting catatan rilis (dan tandai prerelease
    bila diperlukan), lalu pilih **Publish release**. Baru setelah itu aplikasi
