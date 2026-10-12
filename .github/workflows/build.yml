@@ -191,6 +191,7 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
       GOFLAGS: -mod=readonly
 
     steps:
@@ -208,11 +209,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install Android SDK and NDK
         run: |
-          sdkmanager --install \
+          sdkmanager="$(find "$ANDROID_HOME/cmdline-tools" -type f -path '*/bin/sdkmanager' | sort -V | tail -n 1)"
+          if [[ -z "$sdkmanager" ]]; then
+            echo "Android SDK command-line tools missing from $ANDROID_HOME" >&2
+            exit 1
+          fi
+          "$sdkmanager" --install \
             'platforms;android-35' \
             'build-tools;35.0.0' \
             'ndk;27.2.12479018'
