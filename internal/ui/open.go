@@ -26,7 +26,7 @@ func openTarget(target string) bool {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", target)
+		cmd = exec.Command("cmd", "/c", "start", "", target)
 	case "darwin":
 		cmd = exec.Command("open", target)
 	default:
