@@ -30,7 +30,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	_ "modernc.org/sqlite" // pure-Go SQLite driver, registers "sqlite"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Backend implements model.Backend on top of a hypermeow client.
@@ -1020,6 +1020,9 @@ func (b *Backend) onMessageWithNodes(e *events.Message, suppliedNodes []byte) {
 	// UPDATE would let /catch read it before additional_nodes was populated.
 	if p.target == "" && !p.edited && !p.revoke && p.pin == 0 && p.vote == nil && p.event == nil {
 		p.msg.additionalNodes = b.popCatchNodes(p.msg.ChatID, e.Info.ID)
+		if p.msg.additionalNodes == nil {
+			p.msg.additionalNodes = b.popCatchNodes(e.Info.Chat.String(), e.Info.ID)
+		}
 		if suppliedNodes != nil {
 			p.msg.additionalNodes = suppliedNodes
 		}
@@ -1054,6 +1057,7 @@ func (b *Backend) onUndecryptable(e *events.UndecryptableMessage) {
 		FromMe: e.Info.IsFromMe, Time: e.Info.Timestamp, Receipt: model.Sent}
 	p.msg.senderJID = e.Info.Sender.ToNonAD().String()
 	p.msg.senderPush = e.Info.PushName
+	p.msg.additionalNodes = b.popCatchNodes(chat.String(), e.Info.ID)
 	b.apply(&e.Info, p)
 }
 
