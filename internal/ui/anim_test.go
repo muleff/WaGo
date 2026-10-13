@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image"
 	"runtime"
 	"testing"
@@ -106,17 +107,30 @@ func TestFrameClock(t *testing.T) {
 // TestIdleAtRest checks that no animation keeps asking for frames once it
 // has finished: an idle window must not redraw.
 func TestIdleAtRest(t *testing.T) {
+	for _, mobile := range []bool{false, true} {
+		t.Run(fmt.Sprintf("mobile=%v", mobile), func(t *testing.T) { testIdleAtRest(t, mobile) })
+	}
+}
+
+func testIdleAtRest(t *testing.T, mobile bool) {
 	b := mock.New()
 	u := New(b)
+	u.mobile = mobile
 	u.Start(func() {})
 	u.SelectID("rina")
 	now := testNow()
 	var ops op.Ops
 	var r input.Router
+	size := image.Pt(1100, 700)
+	metric := unit.Metric{PxPerDp: 1, PxPerSp: 1}
+	if mobile {
+		size = image.Pt(720, 1440)
+		metric = unit.Metric{PxPerDp: 2, PxPerSp: 2}
+	}
 	frame := func() {
 		ops.Reset()
-		u.Layout(layout.Context{Ops: &ops, Now: now, Source: r.Source(), Metric: unit.Metric{PxPerDp: 1, PxPerSp: 1},
-			Constraints: layout.Exact(image.Pt(1100, 700))})
+		u.Layout(layout.Context{Ops: &ops, Now: now, Source: r.Source(), Metric: metric,
+			Constraints: layout.Exact(size)})
 		r.Frame(&ops)
 		now = now.Add(time.Second)
 	}

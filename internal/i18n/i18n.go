@@ -16,12 +16,12 @@ const DefaultLanguage = "es"
 // Localizer owns the catalogs used by one UI instance.
 type Localizer struct {
 	language string
-	catalogs map[string]*gotext.Po
+	catalogs map[string]map[string]string
 }
 
 // New loads the embedded catalogs and selects lang, falling back to Spanish.
 func New(lang string) *Localizer {
-	l := &Localizer{catalogs: make(map[string]*gotext.Po)}
+	l := &Localizer{catalogs: make(map[string]map[string]string)}
 	for _, language := range []string{"en", "es"} {
 		data, err := catalogs.ReadFile("locales/" + language + ".po")
 		if err != nil {
@@ -29,7 +29,15 @@ func New(lang string) *Localizer {
 		}
 		po := gotext.NewPo()
 		po.Parse(data)
-		l.catalogs[language] = po
+		// Build the immutable lookup once, outside the frame loop. Keep only
+		// strings; the parsed catalog and its translation metadata can be freed.
+		entries := make(map[string]string)
+		for id, translation := range po.GetDomain().GetTranslations() {
+			if translation.IsTranslated() {
+				entries[id] = translation.Get()
+			}
+		}
+		l.catalogs[language] = entries
 	}
 	l.SetLanguage(lang)
 	return l
@@ -51,9 +59,8 @@ func (l *Localizer) Text(msgid string) string {
 	if msgid == "" {
 		return ""
 	}
-	translations := l.catalogs[l.language].GetDomain().GetTranslations()
-	if translation := translations[msgid]; translation != nil && translation.IsTranslated() {
-		return translation.Get()
+	if translation, ok := l.catalogs[l.language][msgid]; ok {
+		return translation
 	}
 	return msgid
 }

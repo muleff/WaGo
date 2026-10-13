@@ -197,7 +197,11 @@ func (u *UI) layoutListItem(gtx C, c *widget.Clickable, it listItem, g listGeom)
 									return drawIcon(gtx, it.ic, 26, icCol)
 								})
 								pic.at(gtx, gtx.Dp(g.iconCenter)-pic.size.X/2, 0)
-								return D{Size: image.Pt(gtx.Dp(g.textLeft), pic.size.Y)}
+								leading := gtx.Dp(g.textLeft)
+								if u.mobile && pic.size.X > 0 {
+									leading = max(leading, gtx.Dp(g.iconCenter)+pic.size.X/2+gtx.Dp(12))
+								}
+								return D{Size: image.Pt(leading, pic.size.Y)}
 							}),
 							layout.Flexed(1, func(gtx C) D {
 								// padRight keeps text off the right edge; trailing

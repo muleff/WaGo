@@ -59,6 +59,13 @@ func (b *Backend) CreateGroup(g model.NewGroup) {
 		b.infos = map[string]*model.ChatInfo{}
 	}
 	b.infos[id] = info
+	if g.Community {
+		announce := id + "-announcements"
+		b.chats = append(b.chats, &model.Chat{ID: announce, Name: "Announcements", IsGroup: true, Time: b.now()})
+		b.communities = append(b.communities, &model.Community{ID: id, Name: g.Name, Announcements: announce})
+		b.emitChat(announce)
+		b.emit(model.CommunitiesEvent{})
+	}
 	b.emitChat(id)
 	b.emit(model.GroupCreatedEvent{ChatID: id})
 }

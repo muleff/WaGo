@@ -28,6 +28,8 @@ const (
 )
 
 type imgEntry struct {
+	// Rendering fields are immutable after publication. A decoder replaces
+	// the loading entry rather than mutating one a frame may still be reading.
 	state imgState
 	op    paint.ImageOp
 	size  image.Point
@@ -159,17 +161,19 @@ func (c *imageCache) getWith(key string, load func() []byte, decode func([]byte)
 		release := acquireDecode(data)
 		img, animated := decode(data)
 		release()
-		c.mu.Lock()
-		e.loadedAt = time.Now()
+		ready := &imgEntry{loadedAt: time.Now()}
 		if img == nil {
-			e.state, e.empty = imgMissing, len(data) == 0
+			ready.state, ready.empty = imgMissing, len(data) == 0
 		} else {
-			e.state, e.op, e.size = imgReady, paint.NewImageOp(img), img.Bounds().Size()
-			e.animated = animated
-			if c.m[key] == e { // not forgotten meanwhile
-				e.bytes = 4 * e.size.X * e.size.Y
-				c.bytes += e.bytes
-			}
+			ready.state, ready.op, ready.size = imgReady, paint.NewImageOp(img), img.Bounds().Size()
+			ready.animated = animated
+			ready.bytes = 4 * ready.size.X * ready.size.Y
+		}
+		c.mu.Lock()
+		if c.m[key] == e { // not forgotten or replaced meanwhile
+			ready.used = e.used
+			c.m[key] = ready
+			c.bytes += ready.bytes
 		}
 		c.mu.Unlock()
 		if c.invalidate != nil {

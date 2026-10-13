@@ -62,7 +62,8 @@ type newChatState struct {
 	photos       chan groupPhoto
 	disappearing uint32 // seconds, 0 = off
 	creating     bool   // waiting for the GroupCreatedEvent
-	nextIn       tween  // the green buttons rising in
+	community    bool
+	nextIn       tween // the green buttons rising in
 	createIn     tween
 }
 
@@ -113,6 +114,17 @@ func (u *UI) openNewGroup(members []model.Contact) {
 	u.requestFocus(&nc.members)
 }
 
+func (u *UI) openNewCommunity() {
+	u.newChatPage()
+	nc := &u.newChat
+	nc.start(nil)
+	nc.resetGroup()
+	nc.picked = nil
+	nc.community = true
+	nc.step, nc.base = ncGroup, ncGroup
+	u.requestFocus(&nc.name)
+}
+
 // snap finishes the pages' slides (for screenshots).
 func (nc *newChatState) snap() {
 	for s := ncChat; s <= ncGroup; s++ {
@@ -131,6 +143,7 @@ func (u *UI) newChatPage() {
 
 // resetGroup clears what the New group page holds.
 func (nc *newChatState) resetGroup() {
+	nc.community = false
 	nc.members.SetText("")
 	nc.mlist.Position = layout.Position{}
 	nc.name.SetText("")
@@ -336,10 +349,10 @@ func (u *UI) createGroup() {
 		u.requestFocus(&nc.name)
 		return
 	}
-	if nc.creating || len(nc.picked) == 0 {
+	if nc.creating || (!nc.community && len(nc.picked) == 0) {
 		return
 	}
-	g := model.NewGroup{Name: name, Photo: nc.photo, Disappearing: nc.disappearing}
+	g := model.NewGroup{Name: name, Photo: nc.photo, Disappearing: nc.disappearing, Community: nc.community}
 	for _, c := range nc.picked {
 		g.Members = append(g.Members, c.ID)
 	}
@@ -360,6 +373,11 @@ func (u *UI) groupCreated(e model.GroupCreatedEvent) {
 	}
 	name := trimSpace(nc.name.Text())
 	nc.step = ncNone
+	if nc.community {
+		u.setPage(pageCommunities)
+		u.setCommunities(u.backend.Communities())
+		return
+	}
 	c := u.chatByID(e.ChatID)
 	if c == nil {
 		c = &model.Chat{ID: e.ChatID, Name: name, IsGroup: true, Time: u.now()}
@@ -817,9 +835,13 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 	if nc.disappearing > 0 {
 		timer = durationLabel(nc.disappearing)
 	}
-	members := itoa(len(nc.picked)) + " members"
+	title, nameHint := "New group", "Group name"
+	if nc.community {
+		title, nameHint = "New community", "Community name"
+	}
+	members := u.locale.Textf("%d members", len(nc.picked))
 	if len(nc.picked) == 1 {
-		members = "1 member"
+		members = u.locale.Text("1 member")
 	}
 	rows := []layout.Widget{
 		func(gtx C) D {
@@ -830,7 +852,7 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 		},
 		func(gtx C) D {
 			return u.contentInset(layout.Inset{Left: 6, Right: 6}).Layout(gtx, func(gtx C) D {
-				return u.pollField(gtx, &nc.name, u.locale.Text("Group name"))
+				return u.pollField(gtx, &nc.name, u.locale.Text(nameHint))
 			})
 		},
 		func(gtx C) D {
@@ -849,6 +871,9 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 			return u.sectionLabel(gtx, members, layout.Inset{Left: 32, Right: 29, Top: 18, Bottom: 8}, labelOpts{})
 		},
 	}
+	if nc.community {
+		rows = rows[:3]
+	}
 	for _, c := range nc.picked {
 		c := c
 		rows = append(rows, func(gtx C) D {
@@ -862,7 +887,7 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 		})
 	}
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx C) D { return u.ncHeader(gtx, "New group") }),
+		layout.Rigid(func(gtx C) D { return u.ncHeader(gtx, title) }),
 		layout.Flexed(1, func(gtx C) D {
 			return u.scrollList(gtx, &nc.glist, len(rows), func(gtx C, i int) D { return rows[i](gtx) })
 		}),
@@ -899,7 +924,11 @@ func (u *UI) groupPhotoButton(gtx C) D {
 				layout.Rigid(iconW(icAddPhoto, 32, p.UserAvatarIcon)),
 				layout.Rigid(layout.Spacer{Height: 8}.Layout),
 				layout.Rigid(func(gtx C) D {
-					l := u.label(12.5, u.locale.Text("Add group icon"), p.UserAvatarIcon, labelOpts{weight: font.Medium, align: text.Middle})
+					hint := "Add group icon"
+					if nc.community {
+						hint = "Add community icon"
+					}
+					l := u.label(12.5, u.locale.Text(hint), p.UserAvatarIcon, labelOpts{weight: font.Medium, align: text.Middle})
 					l.MaxLines = 2
 					return l.Layout(gtx)
 				}),

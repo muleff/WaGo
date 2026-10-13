@@ -4,7 +4,6 @@ import (
 	"gioui.org/font"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/op/clip"
 	"gioui.org/text"
 	"github.com/muleff/WaGo/internal/model"
 	"image"
@@ -113,7 +112,7 @@ func (u *UI) layoutMobileStatusCards(gtx C) D {
 				sz := image.Pt(gtx.Dp(96), gtx.Dp(150))
 				gtx.Constraints = layout.Exact(sz)
 				return clickable(gtx, c, func(gtx C) D {
-					defer clip.RRect{Rect: image.Rectangle{Max: sz}, NW: gtx.Dp(16), NE: gtx.Dp(16), SW: gtx.Dp(16), SE: gtx.Dp(16)}.Push(gtx.Ops).Pop()
+					defer roundShape(sz.X, sz.Y, gtx.Dp(16)).Push(gtx.Ops).Pop()
 					bg := u.pal.Search
 					label := u.locale.Text("Add status")
 					if t != nil {

@@ -528,8 +528,9 @@ type Contact struct {
 
 // NewGroup is a group to create.
 type NewGroup struct {
-	Name    string
-	Members []string // one-to-one chat IDs; you are added anyway
+	Name      string
+	Members   []string // one-to-one chat IDs; you are added anyway
+	Community bool     // creates a parent community with its announcement group
 	// Photo is the group's picture, a JPEG, or nil.
 	Photo []byte
 	// Disappearing is the disappearing-messages timer in seconds (0 = off).

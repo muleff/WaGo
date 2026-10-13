@@ -48,6 +48,10 @@ func (u *UI) layoutStickerRow(gtx C, c *model.Chat, r convRow, maxW, margin int)
 		shift = int(float32(max(0, gtx.Dp(44)-margin)) * selV)
 	}
 	cell, gap := gtx.Dp(150), gtx.Dp(stickerGap)
+	groupIndent := 0
+	if u.mobile && c.IsGroup && !out {
+		groupIndent = gtx.Dp(36)
+	}
 	// In a group, the run's first line is headed by the sender's name and
 	// moves over under it, as a lone sticker does.
 	var head part
@@ -56,8 +60,11 @@ func (u *UI) layoutStickerRow(gtx C, c *model.Chat, r convRow, maxW, margin int)
 	if hasHead {
 		head = u.stickerHeader(gtx, ms[0], cell, maxW)
 		hx, y = stickerUnderHeader(gtx, head, cell)
+		if u.mobile {
+			hx, y = 0, head.size.Y+gtx.Dp(2)
+		}
 	}
-	lines := stickerLines(len(ms), w-shift-hx, cell, gap)
+	lines := stickerLines(len(ms), w-shift-hx-groupIndent, cell, gap)
 
 	if sel {
 		for _, l := range lines {
@@ -85,12 +92,16 @@ func (u *UI) layoutStickerRow(gtx C, c *model.Chat, r convRow, maxW, margin int)
 	}
 
 	if hasHead {
-		head.at(gtx, shift, 0)
+		head.at(gtx, shift+groupIndent, 0)
 	}
-	if c.IsGroup && r.first && !out && !u.mobile {
+	if c.IsGroup && r.first && !out {
 		// The sender's avatar sits in the left margin, level with the top.
 		sz := gtx.Dp(29)
-		t := op.Offset(image.Pt(shift-min(gtx.Dp(40), margin), 0)).Push(gtx.Ops)
+		avatarX := shift - min(gtx.Dp(40), margin)
+		if u.mobile {
+			avatarX = shift
+		}
+		t := op.Offset(image.Pt(avatarX, 0)).Push(gtx.Ops)
 		u.avatar(gtx, ms[0].SenderID, ms[0].Sender, false, dp(gtx, sz))
 		u.senderButton(gtx, ms[0], image.Point{}, image.Pt(sz, sz))
 		t.Pop()
@@ -108,7 +119,7 @@ func (u *UI) layoutStickerRow(gtx C, c *model.Chat, r convRow, maxW, margin int)
 			})
 			lh = max(lh, parts[i].size.Y)
 		}
-		x0 := shift + hx
+		x0 := shift + hx + groupIndent
 		if center {
 			x0 = (w - len(line)*cell - (len(line)-1)*gap) / 2
 		} else if out {

@@ -140,6 +140,7 @@ func (b *Backend) CreateGroup(g model.NewGroup) {
 		ctx, cancel := context.WithTimeout(b.ctx, 60*time.Second)
 		defer cancel()
 		req := whatsmeow.ReqCreateGroup{Name: g.Name, Participants: members}
+		req.IsParent = g.Community
 		if g.Disappearing > 0 {
 			req.GroupEphemeral = types.GroupEphemeral{IsEphemeral: true, DisappearingTimer: g.Disappearing}
 		}
@@ -168,6 +169,11 @@ func (b *Backend) CreateGroup(g model.NewGroup) {
 			}
 		}
 		b.emitChat(jid)
+		if g.Community {
+			// The server also creates an announcement group. Refresh the linked
+			// groups before notifying the UI so the new community is visible.
+			b.refreshGroupNames()
+		}
 		b.emit(model.GroupCreatedEvent{ChatID: jid})
 	}()
 }

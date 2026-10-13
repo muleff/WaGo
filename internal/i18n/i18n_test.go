@@ -2,6 +2,27 @@ package i18n
 
 import "testing"
 
+func BenchmarkText(b *testing.B) {
+	l := New("es")
+	b.ReportAllocs()
+	b.ResetTimer()
+	for b.Loop() {
+		l.Text("Settings")
+	}
+}
+
+func TestTextDoesNotAllocatePerLabel(t *testing.T) {
+	l := New("es")
+	allocs := testing.AllocsPerRun(100, func() {
+		if l.Text("Language") != "Idioma" {
+			t.Fatal("translation changed")
+		}
+	})
+	if allocs != 0 {
+		t.Fatalf("translation lookup allocates %.0f objects per label; want zero", allocs)
+	}
+}
+
 func TestLocalizerLanguagesAndFallback(t *testing.T) {
 	l := New("es")
 	if got := l.Text("Language"); got != "Idioma" {
@@ -57,6 +78,15 @@ func TestSpanishPresenceAndMobileMenus(t *testing.T) {
 	for _, key := range []string{"online", "typing…", "last seen %s", "today at %s", "yesterday at %s", "%s at %s", "Photos & videos", "Status privacy", "Explore", "Add status", "Message", "Photo", "Draft: ", "Edited"} {
 		if got := l.Text(key); got == key {
 			t.Errorf("untranslated mobile copy %q", key)
+		}
+	}
+}
+
+func TestSpanishGroupAndCommunityCopy(t *testing.T) {
+	l := New("es")
+	for _, key := range []string{"You", "New", "Group admin", "Add member tag", "Community name", "Broadcast lists"} {
+		if l.Text(key) == key {
+			t.Errorf("missing Spanish: %q", key)
 		}
 	}
 }

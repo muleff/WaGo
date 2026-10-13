@@ -445,7 +445,12 @@ func (u *UI) layoutCtxMenu(gtx C) {
 		m.scrim.Layout(sgtx, func(gtx C) D { return D{Size: gtx.Constraints.Max} })
 	}
 
-	menu := record(gtx, func(gtx C) D { return u.menuPanel(gtx, "menu:", items) })
+	menu := record(gtx, func(gtx C) D {
+		if u.mobile && m.kind == ctxAttach {
+			return u.mobileAttachPanel(gtx, items)
+		}
+		return u.menuPanel(gtx, "menu:", items)
+	})
 	reactH := 0
 	if m.kind == ctxMessage && m.msg.Kind != model.KindDeleted && !isChannelID(m.chatID) {
 		reactH = gtx.Dp(43 + 7)
@@ -463,11 +468,17 @@ func (u *UI) layoutCtxMenu(gtx C) {
 	case ctxAttach:
 		// It opens upwards from the attach button.
 		pos = image.Pt(max(gtx.Dp(8), m.at.X-gtx.Dp(24)), max(gtx.Dp(8), m.at.Y-gtx.Dp(30)-menu.size.Y))
+		if u.mobile {
+			pos.X = (sz.X - menu.size.X) / 2
+		}
 	case ctxQuality:
 		// It hangs under the send view's HD button.
 		x := min(m.at.X-menu.size.X/2, sz.X-gtx.Dp(8)-menu.size.X)
 		pos = image.Pt(max(gtx.Dp(8), x), m.at.Y+gtx.Dp(26))
 	}
+	// Anchored menus must be bounded after their special-case positioning too.
+	pos.X = max(0, min(pos.X, sz.X-menu.size.X))
+	pos.Y = max(reactH, min(pos.Y, sz.Y-menu.size.Y))
 	// It grows out of the corner nearest to where it was opened.
 	origin := image.Pt(min(max(m.at.X, pos.X), pos.X+menu.size.X), min(max(m.at.Y, pos.Y), pos.Y+menu.size.Y))
 	defer pushPopup(gtx, v, origin).Pop()
@@ -560,7 +571,7 @@ func (u *UI) menuPanel(gtx C, prefix string, items []menuItem) D {
 		}
 		w = max(w, l.size.X+gtx.Dp(unit.Dp(extra)))
 	}
-	w = min(w, gtx.Dp(320))
+	w = min(w, gtx.Dp(320), max(0, gtx.Constraints.Max.X-gtx.Dp(16)))
 	rec := op.Record(gtx.Ops)
 	mgtx := gtx
 	mgtx.Constraints = layout.Constraints{Min: image.Pt(w, 0), Max: image.Pt(w, gtx.Constraints.Max.Y)}
@@ -577,7 +588,7 @@ func (u *UI) menuPanel(gtx C, prefix string, items []menuItem) D {
 	rect := image.Rectangle{Max: dims.Size}
 	fillRRect(gtx, rect.Add(image.Pt(0, gtx.Dp(3))).Inset(-gtx.Dp(2)), r+gtx.Dp(2), p.Shadow)
 	borderRRect(gtx, rect, r, p.Popup, p.PopupBorder)
-	defer clip.UniformRRect(rect, r).Push(gtx.Ops).Pop()
+	defer roundShape(rect.Dx(), rect.Dy(), r).Push(gtx.Ops).Pop()
 	call.Add(gtx.Ops)
 	return dims
 }

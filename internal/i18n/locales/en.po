@@ -1455,3 +1455,39 @@ msgstr "the modified text"
 
 msgid "command.replicate"
 msgstr "Replicates a message, with the same sender as the user you reply to."
+
+msgid "New"
+msgstr "New"
+
+msgid "You"
+msgstr "You"
+
+msgid "Add member tag"
+msgstr "Add member tag"
+
+msgid "Group admin"
+msgstr "Group admin"
+
+msgid "Community name"
+msgstr "Community name"
+
+msgid "Broadcast lists"
+msgstr "Broadcast lists"
+
+msgid "Broadcast lists are not supported by the WhatsApp connection library yet. No messages have been sent."
+msgstr "Broadcast lists are not supported by the WhatsApp connection library yet. No messages have been sent."
+
+msgid "Stickers you send show up here."
+msgstr "Stickers you send show up here."
+
+msgid "GIF search needs Tenor, which OpenWa-Cli doesn't use."
+msgstr "GIF search needs Tenor, which OpenWa-Cli doesn't use."
+
+msgid "Add community icon"
+msgstr "Add community icon"
+
+msgid "Stickers you favourite in WhatsApp show up here."
+msgstr "Stickers you favourite in WhatsApp show up here."
+
+msgid "Stickers you receive show up here."
+msgstr "Stickers you receive show up here."

@@ -1016,6 +1016,9 @@ func (u *UI) update(gtx C) {
 		}
 	}
 	u.updateMenu(gtx)
+	if u.commun.create.Clicked(gtx) || u.commun.add.Clicked(gtx) {
+		u.openNewCommunity()
+	}
 	u.updateFilterMenu(gtx)
 	u.galleryUpdate(gtx)
 	if u.sidebar.menu.Clicked(gtx) {

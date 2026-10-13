@@ -18,6 +18,7 @@ type menuState struct {
 	anim       tween
 	anchor     image.Point // top-right corner, in window coordinates below the title bar
 	scrim      widget.Clickable
+	list       widget.List
 	newGroup   widget.Clickable
 	starred    widget.Clickable
 	readAll    widget.Clickable
@@ -27,6 +28,14 @@ type menuState struct {
 
 func (u *UI) updateMenu(gtx C) {
 	m := &u.menu
+	if u.btn("mobile:menu:community").Clicked(gtx) {
+		u.openNewCommunity()
+		m.open = false
+	}
+	if u.btn("mobile:menu:broadcast").Clicked(gtx) {
+		u.confirm(u.locale.Text("Broadcast lists"), u.locale.Text("Broadcast lists are not supported by the WhatsApp connection library yet. No messages have been sent."))
+		m.open = false
+	}
 	if u.btn("mobile:menu:settings").Clicked(gtx) {
 		u.setPage(pageSettings)
 		m.open = false
@@ -107,7 +116,15 @@ func (u *UI) layoutMenu(gtx C) {
 		{divider: true},
 	}
 	if u.mobile {
-		items = append(items, menuEntry{click: u.btn("mobile:menu:settings"), label: u.locale.Text("Settings"), ic: icSettings})
+		items = []menuEntry{
+			{click: &m.newGroup, label: u.locale.Text("New group"), ic: icGroupAdd},
+			{click: u.btn("mobile:menu:community"), label: u.locale.Text("New community"), ic: icGroupsLine},
+			{click: u.btn("mobile:menu:broadcast"), label: u.locale.Text("Broadcast lists"), ic: icChats},
+			{click: &m.starred, label: u.locale.Text("Starred messages"), ic: icStar},
+			{click: &m.readAll, label: u.locale.Text("ui.chats.mark_all_read"), ic: icon.DoneAll},
+			{click: u.btn("mobile:menu:settings"), label: u.locale.Text("Settings"), ic: icSettings},
+			{divider: true},
+		}
 	}
 	switchY := -1 // the Switch account row's top, below the menu's padding
 	if len(u.accounts) > 0 {
@@ -117,53 +134,62 @@ func (u *UI) layoutMenu(gtx C) {
 	items = append(items, menuEntry{click: &m.logout, label: u.locale.Text("Log out"), ic: icLogout})
 
 	w := gtx.Dp(220)
+	if u.mobile {
+		w = gtx.Dp(292)
+	}
+	w = min(w, max(0, gtx.Constraints.Max.X-gtx.Dp(16)))
 	rec := op.Record(gtx.Ops)
 	mgtx := gtx
 	mgtx.Constraints = layout.Constraints{Min: image.Pt(w, 0), Max: image.Pt(w, gtx.Constraints.Max.Y)}
 	dims := layout.Inset{Top: 8, Bottom: 8, Left: 8, Right: 8}.Layout(mgtx, func(gtx C) D {
-		var children []layout.FlexChild
+		height := 0
 		for _, it := range items {
-			it := it
 			if it.divider {
-				children = append(children, layout.Rigid(func(gtx C) D {
-					h := gtx.Dp(menuDividerH)
-					y := h / 2
-					fillRect(gtx, image.Rect(gtx.Dp(14), y, gtx.Constraints.Max.X-gtx.Dp(14), y+max(1, gtx.Dp(1))), p.PopupDivider)
-					return D{Size: image.Pt(gtx.Constraints.Max.X, h)}
-				}))
-				continue
+				height += gtx.Dp(menuDividerH)
+			} else {
+				height += gtx.Dp(menuRowH)
 			}
-			children = append(children, layout.Rigid(func(gtx C) D {
-				return clickable(gtx, it.click, func(gtx C) D {
-					gtx.Constraints.Min.X = gtx.Constraints.Max.X
-					h := u.hover(gtx, it.click)
-					if it.more && u.acctMenu.open {
-						h = 1 // its submenu is open
-					}
-					bg := mix(p.Menu, p.MenuHover, h)
-					return background(gtx, bg, 8, func(gtx C) D {
-						return vcenter(gtx, gtx.Dp(menuRowH), func(gtx C) D {
-							return layout.Inset{Left: 12, Right: 8}.Layout(gtx, func(gtx C) D {
-								children := []layout.FlexChild{
-									layout.Rigid(iconW(it.ic, 20, p.Icon)),
-									layout.Rigid(layout.Spacer{Width: 14}.Layout),
-									layout.Flexed(1, u.label(15, it.label, p.Text).Layout),
-								}
-								if it.more {
-									children = append(children, layout.Rigid(iconW(icChevronRight, 20, p.Icon)))
-								}
-								return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
-							})
+		}
+		gtx.Constraints = layout.Exact(image.Pt(gtx.Constraints.Max.X, min(height, gtx.Constraints.Max.Y)))
+		m.list.Axis = layout.Vertical
+		return u.scrollList(gtx, &m.list, len(items), func(gtx C, i int) D {
+			it := items[i]
+			if it.divider {
+				h := gtx.Dp(menuDividerH)
+				y := h / 2
+				fillRect(gtx, image.Rect(gtx.Dp(14), y, gtx.Constraints.Max.X-gtx.Dp(14), y+max(1, gtx.Dp(1))), p.PopupDivider)
+				return D{Size: image.Pt(gtx.Constraints.Max.X, h)}
+			}
+			return clickable(gtx, it.click, func(gtx C) D {
+				gtx.Constraints.Min.X = gtx.Constraints.Max.X
+				h := u.hover(gtx, it.click)
+				if it.more && u.acctMenu.open {
+					h = 1 // its submenu is open
+				}
+				bg := mix(p.Menu, p.MenuHover, h)
+				return background(gtx, bg, 8, func(gtx C) D {
+					return vcenter(gtx, gtx.Dp(menuRowH), func(gtx C) D {
+						return layout.Inset{Left: 12, Right: 8}.Layout(gtx, func(gtx C) D {
+							children := []layout.FlexChild{
+								layout.Rigid(iconW(it.ic, 20, p.Icon)),
+								layout.Rigid(layout.Spacer{Width: 14}.Layout),
+								layout.Flexed(1, u.label(15, it.label, p.Text).Layout),
+							}
+							if it.more {
+								children = append(children, layout.Rigid(iconW(icChevronRight, 20, p.Icon)))
+							}
+							return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
 						})
 					})
 				})
-			}))
-		}
-		return layout.Flex{Axis: layout.Vertical}.Layout(gtx, children...)
+			})
+		})
 	})
 	call := rec.Stop()
 
 	pos := image.Pt(m.anchor.X-dims.Size.X, m.anchor.Y)
+	pos.X = max(0, min(pos.X, gtx.Constraints.Max.X-dims.Size.X))
+	pos.Y = max(0, min(pos.Y, gtx.Constraints.Max.Y-dims.Size.Y))
 	if switchY >= 0 {
 		// The account switcher opens beside its row, to the right.
 		rowY := pos.Y + gtx.Dp(8) + switchY
@@ -175,7 +201,7 @@ func (u *UI) layoutMenu(gtx C) {
 	rect := image.Rectangle{Max: dims.Size}
 	fillRRect(gtx, rect.Add(image.Pt(0, gtx.Dp(2))).Inset(-gtx.Dp(1)), r, p.Shadow)
 	fillRRect(gtx, rect, r, p.Menu)
-	defer clip.UniformRRect(rect, r).Push(gtx.Ops).Pop()
+	defer roundShape(rect.Dx(), rect.Dy(), r).Push(gtx.Ops).Pop()
 	call.Add(gtx.Ops)
 }
 

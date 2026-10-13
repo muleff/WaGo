@@ -1753,6 +1753,10 @@ func (u *UI) stickerHeader(gtx C, m *model.Message, sz, maxW int) part {
 	col := p.Senders[hashIndex(m.SenderID+m.Sender, len(p.Senders))]
 	name := record(ngtx, u.label(13, m.Sender, col, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
 	w := min(maxW, max(name.size.X+2*padX, sz+gtx.Dp(24)))
+	if u.mobile {
+		w = min(maxW, name.size.X+2*padX)
+		padY = gtx.Dp(5)
+	}
 	h := name.size.Y + 2*padY
 	return record(gtx, func(gtx C) D {
 		u.paintBubble(gtx, w, h, p.BubbleIn, false, true)

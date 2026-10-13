@@ -249,10 +249,17 @@ func (u *UI) layoutPicker(gtx C, anchor image.Point, maxW int) {
 		// Centered in the window: anchor isn't used.
 		h = min(gtx.Dp(604), sz.Y-gtx.Dp(16))
 	}
+	if u.mobile && e.mode == pickComposer {
+		w = sz.X
+		h = min(h, gtx.Dp(320), sz.Y*45/100)
+	}
 	if w < gtx.Dp(200) || h < gtx.Dp(200) {
 		return
 	}
 	x, y := anchor.X, anchor.Y-h
+	if u.mobile && e.mode == pickComposer {
+		x = 0
+	}
 	if e.mode != pickComposer {
 		x, y = (sz.X-w)/2, (sz.Y-h)/2
 	}
@@ -269,7 +276,7 @@ func (u *UI) layoutPicker(gtx C, anchor image.Point, maxW int) {
 	fillRRect(gtx, rect.Add(image.Pt(0, gtx.Dp(3))).Inset(-gtx.Dp(2)), r+gtx.Dp(2), p.Shadow)
 	borderRRect(gtx, rect, r, p.Picker, p.PopupBorder)
 	defer op.Offset(rect.Min).Push(gtx.Ops).Pop()
-	defer clip.UniformRRect(image.Rectangle{Max: rect.Size()}, r).Push(gtx.Ops).Pop()
+	defer roundShape(rect.Dx(), rect.Dy(), r).Push(gtx.Ops).Pop()
 	pg := gtx
 	pg.Constraints = layout.Exact(rect.Size())
 	// Swallow clicks so they don't reach the scrim.
@@ -291,7 +298,7 @@ func (u *UI) layoutPicker(gtx C, anchor image.Point, maxW int) {
 func (u *UI) pickerMessage(gtx C, msg string) D {
 	return layout.Center.Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Max.X = min(gtx.Constraints.Max.X, gtx.Dp(320))
-		return u.label(15, msg, u.pal.TextSecondary, labelOpts{maxLines: 3, align: text.Middle}).Layout(gtx)
+		return u.label(15, u.locale.Text(msg), u.pal.TextSecondary, labelOpts{maxLines: 3, align: text.Middle}).Layout(gtx)
 	})
 }
 

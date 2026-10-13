@@ -27,10 +27,11 @@ func TestAndroidScreenshots(t *testing.T) {
 		name string
 		size image.Point
 		sp   float32
+		dp   float32
 	}{
-		{"", image.Pt(390, 780), 1}, {"-320", image.Pt(320, 640), 1}, {"-landscape", image.Pt(780, 390), 1}, {"-keyboard", image.Pt(320, 280), 1}, {"-large-text", image.Pt(390, 780), 1.4},
+		{"", image.Pt(390, 780), 1, 1}, {"-320", image.Pt(320, 640), 1, 1}, {"-landscape", image.Pt(780, 390), 1, 1}, {"-keyboard", image.Pt(320, 280), 1, 1}, {"-large-text", image.Pt(390, 780), 1.4, 1}, {"-2x", image.Pt(720, 1440), 2, 2},
 	} {
-		for _, view := range []string{"chats", "conversation", "lastseen", "reply", "contact", "updates", "login", "settings", "profile", "general", "privacy", "newchat", "communities", "calls"} {
+		for _, view := range []string{"chats", "conversation", "lastseen", "reply", "contact", "updates", "login", "settings", "profile", "general", "privacy", "newchat", "communities", "calls", "chats-menu", "attachments", "stickers", "group-members", "new-community"} {
 			u := New(mock.NewReference())
 			u.mobile = true
 			u.Start(func() {})
@@ -90,6 +91,27 @@ func TestAndroidScreenshots(t *testing.T) {
 			if view == "updates" {
 				u.setPage(pageStatus)
 			}
+			if view == "chats-menu" {
+				u.menu.open = true
+				u.menu.anim.snap(true)
+			}
+			if view == "new-community" {
+				u.openNewCommunity()
+				u.newChat.snap()
+			}
+			if view == "attachments" || view == "stickers" || view == "group-members" {
+				u.SelectID("test@g.us")
+				switch view {
+				case "attachments":
+					u.ShowOverlay("attach", int(290*scenario.dp), scenario.size.Y-int(40*scenario.dp))
+					u.ctx.anim.snap(true)
+				case "stickers":
+					u.ShowOverlay("sticker", 0, 0)
+					u.picker.anim.snap(true)
+				case "group-members":
+					u.ShowInfo(12, 0)
+				}
+			}
 			win, err := headless.NewWindow(scenario.size.X, scenario.size.Y)
 			if err != nil {
 				t.Fatal(err)
@@ -98,7 +120,7 @@ func TestAndroidScreenshots(t *testing.T) {
 			var router input.Router
 			for range 3 {
 				ops.Reset()
-				gtx := layout.Context{Ops: &ops, Now: testNow(), Source: router.Source(), Metric: unit.Metric{PxPerDp: 1, PxPerSp: scenario.sp}, Constraints: layout.Exact(scenario.size)}
+				gtx := layout.Context{Ops: &ops, Now: testNow(), Source: router.Source(), Metric: unit.Metric{PxPerDp: scenario.dp, PxPerSp: scenario.sp}, Constraints: layout.Exact(scenario.size)}
 				u.Layout(gtx)
 				router.Frame(&ops)
 				if err := win.Frame(&ops); err != nil {

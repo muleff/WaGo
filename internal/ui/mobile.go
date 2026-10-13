@@ -19,6 +19,7 @@ func mobileTabs() []mobileTab {
 
 func (u *UI) layoutMobileMain(gtx C) D {
 	sz := gtx.Constraints.Max
+	u.menu.anchor = image.Pt(sz.X-gtx.Dp(8), gtx.Dp(68))
 	inChat := u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings
 	sendingStatus := u.page == pageStatus && isStatusDestination(u.attach.chatID) && len(u.attach.files) > 0
 	navH := 0

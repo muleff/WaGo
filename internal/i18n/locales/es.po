@@ -1993,3 +1993,36 @@ msgstr "Añadiendo una descripción"
 
 msgid "Creating a poll"
 msgstr "Creando una encuesta"
+
+msgid "New"
+msgstr "Nuevo"
+
+msgid "Add member tag"
+msgstr "Añadir etiqueta de miembro"
+
+msgid "Group admin"
+msgstr "Administrador"
+
+msgid "Community name"
+msgstr "Nombre de la comunidad"
+
+msgid "Broadcast lists"
+msgstr "Listas de difusión"
+
+msgid "Broadcast lists are not supported by the WhatsApp connection library yet. No messages have been sent."
+msgstr "La biblioteca de conexión con WhatsApp todavía no admite listas de difusión. No se ha enviado ningún mensaje."
+
+msgid "Stickers you send show up here."
+msgstr "Aquí aparecerán los stickers que envíes."
+
+msgid "GIF search needs Tenor, which OpenWa-Cli doesn't use."
+msgstr "La búsqueda de GIF todavía no está disponible."
+
+msgid "Add community icon"
+msgstr "Añadir imagen de la comunidad"
+
+msgid "Stickers you favourite in WhatsApp show up here."
+msgstr "Aquí aparecerán los stickers que marques como favoritos en WhatsApp."
+
+msgid "Stickers you receive show up here."
+msgstr "Aquí aparecerán los stickers que recibas."

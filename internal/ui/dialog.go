@@ -333,7 +333,7 @@ func (u *UI) dialogButton(gtx C, key string, bt dialogButton) D {
 		if bt.flat {
 			border = bg
 		}
-		lbl := record(gtx, u.label(14.5, bt.label, fg, labelOpts{weight: font.Medium, maxLines: 1}).Layout)
+		lbl := record(gtx, u.label(14.5, u.locale.Text(bt.label), fg, labelOpts{weight: font.Medium, maxLines: 1}).Layout)
 		h := gtx.Dp(40)
 		w := lbl.size.X + gtx.Dp(48)
 		borderRRect(gtx, image.Rect(0, 0, w, h), h/2, bg, border)

@@ -661,7 +661,7 @@ func (u *UI) pill(txt string, size unit.Sp, round bool) layout.Widget {
 		p := u.pal
 		m := record(gtx, func(gtx C) D {
 			return u.contentInset(layout.Inset{Left: 9, Right: 9, Top: 2.5, Bottom: 3}).Layout(gtx,
-				u.label(size, txt, p.ChipActiveText, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
+				u.label(size, u.locale.Text(txt), p.ChipActiveText, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
 		})
 		r := gtx.Dp(6)
 		if round {
@@ -677,7 +677,7 @@ func (u *UI) infoMembersHeader(gtx C, info *model.ChatInfo) D {
 	n := len(info.Members)
 	txt := u.locale.Textf("%d members", n)
 	if n == 1 {
-		txt = "1 member"
+		txt = u.locale.Text("1 member")
 	}
 	// The search button's 40dp box ends 6dp right of its icon.
 	return u.contentInset(layout.Inset{Left: infoPadX, Right: 34, Top: 32.2 - 6, Bottom: 13.7 - 6}).Layout(gtx, func(gtx C) D {
@@ -688,7 +688,8 @@ func (u *UI) infoMembersHeader(gtx C, info *model.ChatInfo) D {
 func (u *UI) infoMember(gtx C, m model.Member) D {
 	it := listItem{title: m.Name}
 	if m.Me {
-		it.sub = "Add member tag"
+		it.title = u.locale.Text("You")
+		it.sub = u.locale.Text("Add member tag")
 	}
 	if m.Admin {
 		it.trailing = func(gtx C) D {
@@ -748,10 +749,14 @@ func (u *UI) layoutMemberItem(gtx C, c *widget.Clickable, it listItem, g listGeo
 	p := u.pal
 	title, sub := it.title, it.sub
 	it.content = func(gtx C) D {
+		lines := 1
+		if u.mobile {
+			lines = 0
+		}
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(u.label(17, title, p.Text).Layout),
 			layout.Rigid(layout.Spacer{Height: 2}.Layout),
-			layout.Rigid(u.label(14.5, sub, p.Green, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+			layout.Rigid(u.label(14.5, sub, p.Green, labelOpts{weight: font.SemiBold, maxLines: lines}).Layout),
 		)
 	}
 	return u.layoutListItem(gtx, c, it, g)

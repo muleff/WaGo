@@ -118,3 +118,53 @@ cover full-width row taps, horizontal status scrolling, vertical message
 scrolling, swipe-to-reply, Spanish presence and media copy, timezone loading and
 last-seen calendar boundaries. Actual phone appearance and touch interactions
 still need device testing; headless renders do not provide that evidence.
+
+
+## Mobile menu and performance correction
+
+The mobile Chats menu now has a screen-relative anchor, bounded width/position,
+and scrolling when the viewport is short. Touch regressions exercise the actual
+three-dot header button and New group at 1x and 2x density. New group, New
+community, Starred messages, Mark all as read and Settings use real application
+flows. New community sends hypermeow's `ReqCreateGroup.IsParent` and refreshes
+linked groups. Its creation flow is covered with the mock backend; real-account
+server creation still needs device/account testing.
+
+Linked devices remains omitted. Broadcast lists opens an explicit capability
+notice: pinned hypermeow rejects non-status broadcast sending with
+`ErrBroadcastListUnsupported`. No fake list or silent per-contact send replaces
+a native broadcast list.
+
+Mobile attachments use a bounded action grid above the composer, with existing
+document/photo/audio/contact/poll flows. The Contact cell has a touch regression.
+The supported actions are translated to Spanish. Large avatars/icons now reserve
+a measured 12dp gap before text; member badges, your member row and sticker
+empty states are translated. Group stickers regain a small sender avatar and a
+compact name header, without reintroducing large gutters for every message.
+The emoji/sticker panel uses the phone width and a bounded height.
+
+The per-label catalog copy is removed and rounded GPU clips are reused. Before /
+after CPU measurements and limitations are in `android-performance.md`. Fresh
+headless screenshots cover 19 views across 320/390dp, landscape, keyboard height,
+large text and 360dp at 2x density (114 renders). They do not prove physical-device
+FPS or live WhatsApp delivery.
+
+Final checks for this correction: complete Go test run — 358 passed, 0 failed,
+2 skipped (optional headless tests without their environment flag); `go vet ./...`,
+`go build ./...`, gofmt and `git diff --check` passed. The 114-render headless
+run was executed separately and passed. APK CI status is reported with its
+GitHub Actions run in the delivery message.
+
+The additional race check reproduced concurrent mutation of decoded image
+entries while frames read them. Decoders now publish a replacement entry with
+immutable rendering fields under the cache lock. This preserves asynchronous
+decoding and cache accounting without copying an entry on every cache hit.
+Regressions verify immutable snapshots and no resurrection of forgotten loads.
+
+The focused mobile/image/i18n race suite passed with zero detected races. A
+full UI race run also detected zero races but failed `TestClickRedraws` once
+(the raw-op comparison observed one extra frame); its isolated repeat passed.
+That initial full race run is not counted as a passing suite.
+
+A fresh complete `go test -race ./internal/ui -count=1`, run without other
+CPU-heavy checks concurrently, passed (66.172 seconds) with zero detected races.

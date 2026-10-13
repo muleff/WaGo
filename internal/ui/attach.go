@@ -133,21 +133,21 @@ func (u *UI) openAttachMenu() {
 // sticker maker.
 func (u *UI) attachMenuItems(c *model.Chat) []menuItem {
 	items := []menuItem{
-		{key: "doc", ic: icDocumentFill, col: attachDocument, label: "Document", run: func() {
+		{key: "doc", ic: icDocumentFill, col: attachDocument, label: u.locale.Text("Document"), run: func() {
 			u.pickFiles(c.ID, "Choose documents", nil)
 		}},
-		{key: "photos", ic: icPhotosFill, col: attachPhotos, label: "Photos & videos", run: func() {
+		{key: "photos", ic: icPhotosFill, col: attachPhotos, label: u.locale.Text("Photos & videos"), run: func() {
 			u.pickFiles(c.ID, "Choose photos and videos", []filepick.Filter{
 				{Name: "Photos and videos", Exts: append(append([]string(nil), photoExts...), videoExts...)},
 			})
 		}},
-		{key: "audio", ic: icHeadphonesFill, col: attachAudio, label: "Audio", run: func() {
+		{key: "audio", ic: icHeadphonesFill, col: attachAudio, label: u.locale.Text("Audio"), run: func() {
 			u.pickFiles(c.ID, "Choose audio", []filepick.Filter{{Name: "Audio", Exts: audioExts}})
 		}},
 	}
 	items = append(items,
-		menuItem{key: "contact", ic: icPerson, col: attachContact, label: "Contact", run: func() { u.openContactPicker() }},
-		menuItem{key: "poll", ic: pollIcon, col: attachPoll, label: "Poll", run: func() { u.openPoll() }})
+		menuItem{key: "contact", ic: icPerson, col: attachContact, label: u.locale.Text("Contact"), run: func() { u.openContactPicker() }},
+		menuItem{key: "poll", ic: pollIcon, col: attachPoll, label: u.locale.Text("Poll"), run: func() { u.openPoll() }})
 	return items
 }
 
