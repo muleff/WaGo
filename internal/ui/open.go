@@ -8,7 +8,7 @@ import (
 
 	"gioui.org/layout"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // openURL opens a web link in the default browser. Only http and https
