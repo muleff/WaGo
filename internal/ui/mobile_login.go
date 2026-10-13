@@ -108,7 +108,7 @@ func (u *UI) layoutMobilePhoneForm(gtx C) D {
 		layout.Rigid(func(gtx C) D {
 			return u.label(
 				24,
-				"Link your WhatsApp",
+				u.locale.Text("Link your WhatsApp"),
 				p.Text,
 				labelOpts{
 					weight:   font.Medium,
@@ -120,7 +120,7 @@ func (u *UI) layoutMobilePhoneForm(gtx C) D {
 		layout.Rigid(func(gtx C) D {
 			return u.label(
 				14,
-				"Enter the phone number connected to your WhatsApp account. We'll use it to prepare this device for linking.",
+				u.locale.Text("Enter the phone number connected to your WhatsApp account. We'll use it to prepare this device for linking."),
 				p.TextSecondary,
 				labelOpts{maxLines: 4},
 			).Layout(gtx)
@@ -129,13 +129,13 @@ func (u *UI) layoutMobilePhoneForm(gtx C) D {
 		layout.Rigid(func(gtx C) D {
 			return layout.Flex{Axis: layout.Horizontal}.Layout(gtx,
 				layout.Rigid(func(gtx C) D {
-					txt := "Country code"
+					txt := u.locale.Text("Country code")
 					col := p.TextSecondary
 					return vcenter(gtx, gtx.Constraints.Min.Y, u.label(12, txt, col, labelOpts{maxLines: 1}).Layout)
 				}),
 				layout.Rigid(layout.Spacer{Width: 12}.Layout),
 				layout.Flexed(1, func(gtx C) D {
-					return u.label(12, "Phone number", p.TextSecondary, labelOpts{maxLines: 1}).Layout(gtx)
+					return u.label(12, u.locale.Text("Phone number"), p.TextSecondary, labelOpts{maxLines: 1}).Layout(gtx)
 				}),
 			)
 		}),
@@ -162,7 +162,7 @@ func (u *UI) layoutMobilePhoneForm(gtx C) D {
 		layout.Rigid(func(gtx C) D {
 			return u.label(
 				13,
-				"After you continue, follow the instructions in WhatsApp on your primary phone.",
+				u.locale.Text("After you continue, follow the instructions in WhatsApp on your primary phone."),
 				p.TextSecondary,
 				labelOpts{maxLines: 3},
 			).Layout(gtx)
@@ -177,7 +177,7 @@ func (u *UI) layoutMobilePhoneForm(gtx C) D {
 			}
 			return layout.Inset{Top: 12}.Layout(gtx, func(gtx C) D {
 				return u.dialogButton(gtx, "login:mobile-pair-back", dialogButton{
-					label: "Back to QR code",
+					label: u.locale.Text("Back to QR code"),
 				})
 			})
 		}),
@@ -210,20 +210,20 @@ func (u *UI) layoutMobileVerifyForm(gtx C) D {
 		}),
 		layout.Rigid(layout.Spacer{Height: 18}.Layout),
 		layout.Rigid(func(gtx C) D {
-			return u.label(24, "Your 8-digit code", p.Text,
+			return u.label(24, u.locale.Text("Your 8-character code"), p.Text,
 				labelOpts{weight: font.Medium, maxLines: 1}).Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: 10}.Layout),
 		layout.Rigid(func(gtx C) D {
 			phone := "+" + u.countryCode.Text() + " " + u.phoneNumber.Text()
-			return u.label(14, "Enter this code in WhatsApp on your phone: "+phone, p.TextSecondary,
+			return u.label(14, u.locale.Textf("Enter this code in WhatsApp on your phone: %s", phone), p.TextSecondary,
 				labelOpts{maxLines: 2}).Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: 28}.Layout),
 		layout.Rigid(u.layoutMobileCodeBoxes),
 		layout.Rigid(layout.Spacer{Height: 12}.Layout),
 		layout.Rigid(func(gtx C) D {
-			return u.label(13, "The code contains eight numbers.", p.TextSecondary,
+			return u.label(13, u.locale.Text("The code contains eight letters or numbers."), p.TextSecondary,
 				labelOpts{maxLines: 1}).Layout(gtx)
 		}),
 		layout.Rigid(layout.Spacer{Height: 24}.Layout),
@@ -233,14 +233,14 @@ func (u *UI) layoutMobileVerifyForm(gtx C) D {
 		layout.Rigid(layout.Spacer{Height: 12}.Layout),
 		layout.Rigid(func(gtx C) D {
 			return u.dialogButton(gtx, "login:code-back", dialogButton{
-				label: "Change phone number",
+				label: u.locale.Text("Change phone number"),
 			})
 		}),
 	)
 }
 func (u *UI) layoutResendCode(gtx C, disabled bool) D {
 	return u.dialogButton(gtx, "login:code-resend", dialogButton{
-		label:    "Resend code",
+		label:    u.locale.Text("Resend code"),
 		disabled: disabled,
 	})
 }
@@ -314,7 +314,7 @@ func (u *UI) layoutCountryCode(gtx C) D {
 				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 					layout.Rigid(func(gtx C) D {
 
-						return u.label(1, "+", p.Text).Layout(gtx)
+						return u.label(18, u.locale.Text("+"), p.Text).Layout(gtx)
 					}),
 					layout.Flexed(1, func(gtx C) D {
 						return material.Editor(u.th, &u.countryCode, "52").Layout(gtx)
@@ -328,9 +328,9 @@ func (u *UI) layoutCountryCode(gtx C) D {
 func (u *UI) layoutPairingButton(gtx C) D {
 	country, number := u.countryCode.Text(), u.phoneNumber.Text()
 	disabled := u.login.pairing != nil || len(country) < 1 || len(country) > 3 || len(number) < 7 || len(country)+len(number) > 15
-	label := "Next"
+	label := u.locale.Text("Next")
 	if u.login.pairing != nil {
-		label = "Connecting..."
+		label = u.locale.Text("Connecting...")
 	}
 	return u.dialogButton(gtx, "login:pair", dialogButton{
 		label:    label,
@@ -351,7 +351,7 @@ func (u *UI) layoutPhoneNumber(gtx C) D {
 		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min = gtx.Constraints.Max
 			return layout.Inset{Top: 14, Bottom: 14, Left: 12, Right: 12}.Layout(gtx, func(gtx C) D {
-				return material.Editor(u.th, &u.phoneNumber, "Phone number").Layout(gtx)
+				return material.Editor(u.th, &u.phoneNumber, u.locale.Text("Phone number")).Layout(gtx)
 			})
 		}),
 	)

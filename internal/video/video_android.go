@@ -122,7 +122,7 @@ func (a *androidAudio) status() Status {
 		Ready:  true,
 		Paused: a.paused.Load(),
 		Ended:  a.ended.Load(),
-		Pos:    samplesToDuration(a.played.Load()),
+		Pos:    samplesToDuration(min(a.played.Load(), a.total)),
 		Dur:    samplesToDuration(a.total),
 	}
 	return st
@@ -133,74 +133,49 @@ func (a *androidAudio) fill(out, _ []byte, _ uint32) {
 	if a.dropCarry.CompareAndSwap(true, false) {
 		a.carry = nil
 	}
+	n := takePCM(out, &a.carry, a.queue)
 	if a.muted.Load() {
-		// Keep consuming so the position stays in sync while silent.
-		a.discard(len(out))
 		clear(out)
-		a.played.Add(int64(len(out)) / int64(2*a.ch))
-		return
 	}
-	off := 0
-	for off < len(out) {
-		if len(a.carry) == 0 {
-			select {
-			case chunk, ok := <-a.queue:
-				if !ok || len(chunk) == 0 {
-					clear(out[off:])
-					a.played.Add(int64(len(out)) / int64(2*a.ch))
-					return
-				}
-				a.carry = chunk
-			default:
-				clear(out[off:])
-				a.played.Add(int64(len(out)) / int64(2*a.ch))
-				return
-			}
-		}
-		n := copy(out[off:], a.carry)
-		a.carry = a.carry[n:]
-		off += n
-	}
-	a.played.Add(int64(len(out)) / int64(2*a.ch))
+	a.played.Add(int64(n) / int64(2*a.ch))
 }
 
 func (a *androidAudio) loop() {
-	defer a.device.Uninit()
-	defer a.mctx.Uninit()
-	defer a.mctx.Free()
-	defer a.file.Close()
-	chunk := make([]byte, 3840) // ~20 ms of 48 kHz mono s16
+	defer func() { a.device.Stop(); a.device.Uninit(); a.mctx.Uninit(); a.mctx.Free(); a.file.Close() }()
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+	chunk := make([]byte, 3840)
+	var pending []byte
 	for {
+		if !a.paused.Load() && !a.eof.Load() && pending == nil {
+			n, err := a.dec.Read(chunk)
+			if n > 0 {
+				pending = append([]byte(nil), chunk[:n]...)
+			}
+			if err != nil {
+				a.eof.Store(true)
+				if err != io.EOF {
+					a.p.setStatus(Status{Ready: true, Paused: true, Err: err})
+					return
+				}
+			}
+		}
+		var output chan []byte
+		if !a.paused.Load() && pending != nil {
+			output = a.queue
+		}
 		select {
 		case <-a.p.done:
 			return
 		case c := <-a.p.cmds:
+			if c.kind == cmdSeek || c.kind == cmdPlay && a.ended.Load() {
+				pending = nil
+			}
 			a.command(c)
-		default:
-			if a.paused.Load() || a.eof.Load() {
-				a.publish()
-				select {
-				case <-a.p.done:
-					return
-				case c := <-a.p.cmds:
-					a.command(c)
-				}
-				continue
-			}
-			n, err := a.dec.Read(chunk)
-			if n > 0 {
-				buf := make([]byte, n)
-				copy(buf, chunk[:n])
-				select {
-				case a.queue <- buf:
-				case <-a.p.done:
-					return
-				}
-			}
-			if err != nil {
-				a.eof.Store(true)
-				a.publish()
-			}
+		case output <- pending:
+			pending = nil
+		case <-ticker.C:
+			a.publish()
 		}
 	}
 }
@@ -231,6 +206,18 @@ func (a *androidAudio) command(c command) {
 			a.paused.Store(true)
 		}
 	case cmdSeek:
+		wasPlaying := !a.paused.Load()
+		if wasPlaying {
+			a.device.Stop()
+		}
+		defer func() {
+			if wasPlaying {
+				if err := a.device.Start(); err != nil {
+					a.paused.Store(true)
+					a.p.setStatus(Status{Ready: true, Paused: true, Err: err})
+				}
+			}
+		}()
 		sample := int64(float64(c.pos) / float64(time.Second) * 48000)
 		sample = min(max(sample, 0), a.total)
 		if err := a.rewind(sample); err != nil {

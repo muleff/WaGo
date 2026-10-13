@@ -1,7 +1,9 @@
 package wa
 
 import (
+	"bytes"
 	"encoding/binary"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -93,5 +95,40 @@ func TestVoiceUsesAudioEncryptionAndPTT(t *testing.T) {
 	if audio == nil || !audio.GetPTT() || audio.GetSeconds() != 7 ||
 		audio.GetMimetype() != "audio/ogg; codecs=opus" {
 		t.Fatalf("voice envelope: %+v", audio)
+	}
+}
+
+func TestUploadKeepsTemporarySourceReadable(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "picked.pdf")
+	data := []byte("temporary attachment")
+	if err := os.WriteFile(path, data, 0600); err != nil {
+		t.Fatal(err)
+	}
+	up := upload{path: path}
+	if err := up.holdSource(); err != nil {
+		t.Fatal(err)
+	}
+	defer up.closeSource()
+	// Android unlinks the picker copy when SendFile returns; the uploader
+	// must keep reading its held descriptor, independent of this pathname.
+	_ = os.Remove(path)
+	got, err := io.ReadAll(up.source)
+	if err != nil || !bytes.Equal(got, data) {
+		t.Fatalf("source lost: %q %v", got, err)
+	}
+	up.closeSource()
+	if _, err := up.source.Read(make([]byte, 1)); err == nil {
+		t.Fatal("source descriptor leaked")
+	}
+}
+
+func TestExternalMediaTypeHasNoParameters(t *testing.T) {
+	if got := externalMediaType("note.txt"); got != "text/plain" {
+		t.Fatalf("intent MIME=%q", got)
+	}
+}
+func TestProviderMIMESurvivesMisleadingExtension(t *testing.T) {
+	if got := fileType(model.Attachment{Path: "photo.backup", MIME: "image/jpeg", Media: model.MediaImage}); got != "image/jpeg" {
+		t.Fatalf("file MIME=%q", got)
 	}
 }

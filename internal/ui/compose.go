@@ -154,6 +154,10 @@ func (u *UI) jumpTo(id string) {
 
 // sendComposer sends the composer text with its reply and mentions.
 func (u *UI) sendComposer() {
+	if u.mobile && u.conn.State != model.StateOnline {
+		u.toast(u.locale.Text("Waiting for connection. Your draft is saved."))
+		return
+	}
 	if u.postingStatus() {
 		u.sendAttachments()
 		return

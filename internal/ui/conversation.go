@@ -91,7 +91,7 @@ func (u *UI) rows(c *model.Chat) []convRow {
 		}
 		newDay := prev == nil || !sameDay(prev.Time, m.Time)
 		if newDay {
-			rows = append(rows, convRow{kind: rowDate, date: dateChip(m.Time, now)})
+			rows = append(rows, convRow{kind: rowDate, date: u.calendarText(dateChip(m.Time, now))})
 		}
 		// Announcements each have a card of their own. A run goes on, however
 		// long the sender waited, until someone else writes or the day changes.

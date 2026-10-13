@@ -54,8 +54,10 @@ type Backend struct {
 	catchNodes catchNodeBuffer
 	typing     outgoingTyping
 
-	pairMu     sync.Mutex
-	pairCancel context.CancelFunc // stops the running pair's QR loop
+	pairMu         sync.Mutex
+	pairCancel     context.CancelFunc // stops the running pair's QR loop
+	pairContext    context.Context
+	mobileQRCancel context.CancelFunc
 
 	mu     sync.Mutex
 	events []model.Event
@@ -92,7 +94,8 @@ type Backend struct {
 	// learned from send acks (sendAsyncPrep).
 	serverSkew        atomic.Int64
 	mobile            bool
-	pairCodeRequested bool
+	pairCodeRequested atomic.Bool
+	resumeInFlight    atomic.Bool
 }
 
 func (b *Backend) now() time.Time {
@@ -258,7 +261,7 @@ func (b *Backend) connect() {
 // or a newer pair (Retry) takes over.
 func (b *Backend) pair() {
 	ctx, cli, ch, ok := b.startPair()
-	if !ok {
+	if !ok || b.mobile {
 		return
 	}
 	for {
@@ -273,10 +276,10 @@ func (b *Backend) pair() {
 		}
 		switch item.Event {
 		case whatsmeow.QRChannelEventCode:
-			if b.pairCodeRequested && b.mobile {
+			if b.pairCodeRequested.Load() && b.mobile {
 				continue
 			}
-			if !b.pairCodeRequested && b.mobile {
+			if !b.pairCodeRequested.Load() && b.mobile {
 				b.emit(model.ConnEvent{State: model.StateQR, IsCode: true})
 			}
 			b.emit(model.ConnEvent{State: model.StateQR, QR: item.Code})
@@ -307,6 +310,7 @@ func (b *Backend) RequestPairingCode(phoneNumber string) (string, error) {
 	for {
 		cli := b.client()
 		if cli != nil && cli.IsConnected() {
+			b.pairCodeRequested.Store(true)
 			code, err := cli.PairPhone(ctx, phoneNumber, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
 			if err != nil {
 				return "", fmt.Errorf("pair phone: %w", err)
@@ -336,12 +340,25 @@ func (b *Backend) startPair() (context.Context, *whatsmeow.Client, <-chan whatsm
 	}
 	ctx, cancel := context.WithCancel(b.ctx)
 	b.pairCancel = cancel
+	b.pairContext = ctx
+	if b.mobileQRCancel != nil {
+		b.mobileQRCancel()
+		b.mobileQRCancel = nil
+	}
+	b.pairCodeRequested.Store(false)
 
 	b.client().Disconnect()
 	b.useDevice(b.container.NewDevice())
 	b.applyHistorySync()
 	cli := b.client()
 	b.emit(model.ConnEvent{State: model.StateStarting})
+	if b.mobile {
+		if err := cli.ConnectContext(ctx); err != nil {
+			b.emitDisconnectedState()
+			b.Resume()
+		}
+		return ctx, cli, nil, true
+	}
 	ch, err := cli.GetQRChannel(ctx)
 	if err != nil {
 		b.fail("Couldn't start linking: %v", err)
@@ -656,6 +673,18 @@ func (b *Backend) handle(evt any) {
 	ctx := b.ctx
 	b.onAccountEvent(evt)
 	switch e := evt.(type) {
+	case *events.QR:
+		if b.mobile {
+			b.mobileQR(e.Codes)
+		}
+	case *events.PairError:
+		if b.mobile {
+			b.fail("Linking failed: %v", e.Error)
+		}
+	case *events.PairPasskeyRequest:
+		if b.mobile {
+			b.fail("Passkey verification is not supported. Try linking by phone number.")
+		}
 	case *events.Connected:
 		b.accountFetched.Store(false)
 		cli := b.client()
@@ -671,7 +700,7 @@ func (b *Backend) handle(evt any) {
 			b.refreshChannels()
 		}()
 	case *events.Disconnected, *events.KeepAliveTimeout:
-		b.emit(model.ConnEvent{State: model.StateOffline})
+		b.emitDisconnectedState()
 	case *events.KeepAliveRestored:
 		b.emit(model.ConnEvent{State: model.StateOnline})
 	case *events.LoggedOut:
@@ -686,6 +715,10 @@ func (b *Backend) handle(evt any) {
 		b.fail("Couldn't connect: %s", e.PermanentDisconnectDescription())
 	case *events.PairSuccess:
 		b.log.Infof("paired as %s (%s)", e.ID, e.Platform)
+		if b.mobile {
+			b.emit(model.ConnEvent{State: model.StateConnecting})
+			b.emit(model.SyncEvent{Percent: 0})
+		}
 
 	case *events.HistorySync:
 		b.onHistory(e)

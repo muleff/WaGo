@@ -195,7 +195,7 @@ func (u *UI) editsPanel(gtx C) D {
 
 // versionTime is when a version was written: "today at 09:41".
 func (u *UI) versionTime(t time.Time) string {
-	day := dateChip(t, u.now())
+	day := u.calendarText(dateChip(t, u.now()))
 	if day == "Today" || day == "Yesterday" {
 		day = strings.ToLower(day)
 	}

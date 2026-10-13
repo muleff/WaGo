@@ -175,7 +175,7 @@ func (u *UI) starredRow(gtx C, m *model.Message, all bool) D {
 							layout.Rigid(func(gtx C) D { return u.avatar(gtx, m.SenderID, who, false, 24) }),
 							layout.Rigid(layout.Spacer{Width: 10}.Layout),
 							layout.Flexed(1, u.label(14.5, who, p.Text, labelOpts{weight: font.Medium, maxLines: 1}).Layout),
-							layout.Rigid(u.label(13, listTime(m.Time, u.now()), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
+							layout.Rigid(u.label(13, u.calendarText(listTime(m.Time, u.now())), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
 						)
 					}),
 					layout.Rigid(layout.Spacer{Height: 8}.Layout),
@@ -210,7 +210,7 @@ func (u *UI) showMessage(m *model.Message) {
 	if u.selected == nil || u.selected.ID != m.ChatID {
 		c := u.chatByID(m.ChatID)
 		if c == nil {
-			u.toast("That chat isn't in your chat list.")
+			u.toast(u.locale.Text("That chat isn't in your chat list."))
 			return
 		}
 		u.setPage(pageChats)
@@ -272,7 +272,7 @@ func (u *UI) changeRows() []layout.Widget {
 	if len(u.info.changes) == 0 {
 		return []layout.Widget{func(gtx C) D {
 			return layout.Inset{Left: infoPadX, Right: 24, Top: 40}.Layout(gtx, func(gtx C) D {
-				l := u.label(15, "No member changes yet. Changes show here from when this computer sees them.", p.TextSecondary)
+				l := u.label(15, u.locale.Text("No member changes yet. Changes show here from when this computer sees them."), p.TextSecondary)
 				l.MaxLines = 0
 				return l.Layout(gtx)
 			})
@@ -285,7 +285,7 @@ func (u *UI) changeRows() []layout.Widget {
 				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 					layout.Rigid(u.label(15.5, memberChangeText(ch), p.Text, labelOpts{maxLines: 2}).Layout),
 					layout.Rigid(layout.Spacer{Height: 3}.Layout),
-					layout.Rigid(u.label(13, dateChip(ch.Time, u.now())+" at "+ch.Time.Format("15:04"), p.TextSecondary).Layout),
+					layout.Rigid(u.label(13, u.calendarText(dateChip(ch.Time, u.now()))+" at "+ch.Time.Format("15:04"), p.TextSecondary).Layout),
 				)
 			})
 		})
@@ -321,6 +321,8 @@ func memberChangeText(c model.MemberChange) string {
 
 // infoItem is a row of the info panel's settings.
 func (u *UI) infoItem(key string, it listItem) layout.Widget {
+	it.title = u.locale.Text(it.title)
+	it.sub = u.locale.Text(it.sub)
 	return func(gtx C) D { return u.layoutListItem(gtx, u.btn("info:"+key), it, infoGeom) }
 }
 

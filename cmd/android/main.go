@@ -11,13 +11,13 @@ import (
 
 	// Permission packages add their AndroidManifest entries at packaging
 	// time (voice notes need RECORD_AUDIO, attachments need storage,
-	// profile photos need the camera). Dangerous permissions are still
-	// granted by the user in system settings on first use.
+	// profile photos need the camera). AndroidBridge requests microphone
+	// permission on first use. SAF selection does not need storage permission.
 	_ "gioui.org/app/permission/camera"
 	_ "gioui.org/app/permission/microphone"
-	_ "gioui.org/app/permission/storage"
 
 	"github.com/muleff/WaGo/internal/accounts"
+	"github.com/muleff/WaGo/internal/androidbridge"
 	"github.com/muleff/WaGo/internal/model"
 	"github.com/muleff/WaGo/internal/ui"
 	"github.com/muleff/WaGo/internal/wa"
@@ -30,6 +30,9 @@ func main() {
 	// This must be called from main, after Android has initialized Gio.
 	dataDir, err := app.DataDir()
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err := androidbridge.ConfigureTemp(dataDir); err != nil {
 		log.Fatal(err)
 	}
 	go run(filepath.Join(dataDir, "WazzapClients"))

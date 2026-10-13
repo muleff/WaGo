@@ -222,14 +222,18 @@ func (u *UI) layoutListItem(gtx C, c *widget.Clickable, it listItem, g listGeom)
 }
 
 func (u *UI) listItemText(gtx C, it listItem, fg, sub color.NRGBA) D {
+	titleLines := 1
+	if u.mobile {
+		titleLines = 0
+	}
 	if it.content != nil {
 		return it.content(gtx)
 	}
 	if it.sub == "" {
-		return u.label(17, u.locale.Text(it.title), fg).Layout(gtx)
+		return u.label(17, u.locale.Text(it.title), fg, labelOpts{maxLines: titleLines}).Layout(gtx)
 	}
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(u.label(17, u.locale.Text(it.title), fg).Layout),
+		layout.Rigid(u.label(17, u.locale.Text(it.title), fg, labelOpts{maxLines: titleLines}).Layout),
 		layout.Rigid(layout.Spacer{Height: 2}.Layout),
 		layout.Rigid(func(gtx C) D {
 			l := u.label(15.2, u.locale.Text(it.sub), sub, labelOpts{})

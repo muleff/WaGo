@@ -65,7 +65,7 @@ type command struct {
 // Open starts playing path. notify is called from other goroutines when
 // there is a new frame or the status changed.
 func Open(path string, notify func()) (*Player, error) {
-	p := &Player{notify: notify, cmds: make(chan command, 16), done: make(chan struct{}), ready: -1, shown: -1}
+	p := newPlayerState(notify, false)
 	if err := start(p, path); err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func Open(path string, notify func()) (*Player, error) {
 // OpenAudio is Open for a sound file. The player then sets nothing up to
 // draw pictures with, and Frame always returns nil.
 func OpenAudio(path string, notify func()) (*Player, error) {
-	p := &Player{notify: notify, cmds: make(chan command, 16), done: make(chan struct{}), ready: -1, shown: -1, audio: true}
+	p := newPlayerState(notify, true)
 	if err := start(p, path); err != nil {
 		return nil, err
 	}
@@ -191,4 +191,10 @@ func (p *Player) publish(b *image.RGBA) {
 	if p.notify != nil {
 		p.notify()
 	}
+}
+
+func newPlayerState(notify func(), audio bool) *Player {
+	p := &Player{notify: notify, cmds: make(chan command, 16), done: make(chan struct{}), ready: -1, shown: -1, audio: audio}
+	p.Play()
+	return p
 }

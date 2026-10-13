@@ -512,7 +512,7 @@ func (u *UI) layoutRowTime(gtx C, c *model.Chat) D {
 	}
 	var ts string
 	if c.Last != nil {
-		ts = listTime(c.Last.Time, u.now())
+		ts = u.calendarText(listTime(c.Last.Time, u.now()))
 	}
 	return u.label(13.2, ts, col).Layout(gtx)
 }

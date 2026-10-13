@@ -55,11 +55,11 @@ func (u *UI) contactRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Wi
 		disappearing = durationLabel(d)
 	}
 	rows = append(rows,
-		item("starred", listItem{ic: icStar, title: "Starred messages"}),
+		item("starred", listItem{ic: icStar, title: u.locale.Text("Starred messages")}),
 		u.infoNotifRow(c, ""),
-		item("disappearing", listItem{glyph: disappearingIcon, title: "Disappearing messages", sub: disappearing}),
-		item("privacy", listItem{ic: icShield, title: "Advanced chat privacy", sub: "Off"}),
-		item("encryption", listItem{ic: icLockOutline, title: "Encryption", sub: "Messages are end-to-end encrypted. Click to verify."}),
+		item("disappearing", listItem{glyph: disappearingIcon, title: u.locale.Text("Disappearing messages"), sub: disappearing}),
+		item("privacy", listItem{ic: icShield, title: u.locale.Text("Advanced chat privacy"), sub: u.locale.Text("Off")}),
+		item("encryption", listItem{ic: icLockOutline, title: u.locale.Text("Encryption"), sub: u.locale.Text("Messages are end-to-end encrypted. Click to verify.")}),
 		u.infoDivider(12, 0),
 	)
 
@@ -73,9 +73,9 @@ func (u *UI) contactRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Wi
 	}
 
 	if n := len(info.Common); n > 0 {
-		title := fmt.Sprintf("%d groups in common", n)
+		title := u.locale.Textf("%d groups in common", n)
 		if n == 1 {
-			title = "1 group in common"
+			title = u.locale.Text("1 group in common")
 		}
 		rows = append(rows, func(gtx C) D { return layout.Spacer{Height: 18}.Layout(gtx) }, u.infoSection(title, false))
 		for _, g := range info.Common {
@@ -92,15 +92,15 @@ func (u *UI) contactRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Wi
 	if chat != nil {
 		rows = append(rows,
 			u.infoFavRow(chat),
-			action("list", listItem{ic: icAddToList, title: "Add to list"}, func() { u.openListsMenu(chat) }),
-			action("export", listItem{ic: icDownload, title: "Export chat"}, func() { b.ExportChat(id) }),
-			action("clear", listItem{ic: icClear, title: "Clear chat", danger: true}, func() { u.confirmClearChat(id) }),
+			action("list", listItem{ic: icAddToList, title: u.locale.Text("Add to list")}, func() { u.openListsMenu(chat) }),
+			action("export", listItem{ic: icDownload, title: u.locale.Text("Export chat")}, func() { b.ExportChat(id) }),
+			action("clear", listItem{ic: icClear, title: u.locale.Text("Clear chat"), danger: true}, func() { u.confirmClearChat(id) }),
 		)
 	}
 	if info.Blocked {
-		rows = append(rows, action("block", listItem{ic: icBlock, title: "Unblock " + name, danger: true}, func() { b.SetBlocked(id, false) }))
+		rows = append(rows, action("block", listItem{ic: icBlock, title: u.locale.Text("Unblock ") + name, danger: true}, func() { b.SetBlocked(id, false) }))
 	} else {
-		rows = append(rows, action("block", listItem{ic: icBlock, title: "Block " + name, danger: true}, func() {
+		rows = append(rows, action("block", listItem{ic: icBlock, title: u.locale.Text("Block ") + name, danger: true}, func() {
 			u.confirm("Block "+name+"?", "Blocked contacts will no longer be able to call you or send you messages.",
 				dialogButton{label: "Block", primary: true, danger: true, run: func() { b.SetBlocked(id, true) }})
 		}))
@@ -111,7 +111,7 @@ func (u *UI) contactRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Wi
 	}
 	rows = append(rows, action("report", listItem{ic: icThumbDown, title: report, danger: true}, u.reportUnsupported))
 	if chat != nil {
-		rows = append(rows, action("delete", listItem{ic: icDelete, title: "Delete chat", danger: true}, func() { u.confirmDeleteChat(id) }))
+		rows = append(rows, action("delete", listItem{ic: icDelete, title: u.locale.Text("Delete chat"), danger: true}, func() { u.confirmDeleteChat(id) }))
 	}
 	return append(rows, func(gtx C) D { return layout.Spacer{Height: 24}.Layout(gtx) })
 }
@@ -139,7 +139,7 @@ func (u *UI) contactSubtitle(c *model.Chat, info *model.ChatInfo) layout.Widget 
 		add(0, u.label(15.5, biz.Name, p.TextSecondary).Layout)
 	}
 	if biz.Category != "" {
-		add(22, u.label(15.5, biz.Category, p.TextSecondary).Layout)
+		add(22, u.label(15.5, u.locale.Text(biz.Category), p.TextSecondary).Layout)
 	}
 	if st := hoursNow(biz, u.now()); st.known {
 		add(10, func(gtx C) D {
@@ -148,8 +148,8 @@ func (u *UI) contactSubtitle(c *model.Chat, info *model.ChatInfo) layout.Widget 
 				col = p.Danger
 			}
 			return layout.Flex{Alignment: layout.Baseline}.Layout(gtx,
-				layout.Rigid(u.label(15.5, st.word, col).Layout),
-				layout.Rigid(u.label(15.5, " "+st.summary, p.TextSecondary).Layout),
+				layout.Rigid(u.label(15.5, u.locale.Text(st.word), col).Layout),
+				layout.Rigid(u.label(15.5, " "+u.locale.Text(st.summary), p.TextSecondary).Layout),
 			)
 		})
 	}
@@ -173,7 +173,7 @@ func (u *UI) businessNotice(gtx C) D {
 	p := u.pal
 	return layout.Inset{Left: infoTextX, Right: 38, Top: 18, Bottom: 44}.Layout(gtx, func(gtx C) D {
 		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-			layout.Flexed(1, u.label(15, "This is a business account.", p.Text, labelOpts{maxLines: 2}).Layout),
+			layout.Flexed(1, u.label(15, u.locale.Text("This is a business account."), p.Text, labelOpts{maxLines: 2}).Layout),
 			layout.Rigid(func(gtx C) D { return infoIcon(gtx, p.Green) }),
 		)
 	})
@@ -208,7 +208,7 @@ func (u *UI) infoLink(link string) layout.Widget {
 				target = "https://" + target
 			}
 			if !openURL(target) {
-				u.toast("Couldn't open the link.")
+				u.toast(u.locale.Text("Couldn't open the link."))
 			}
 		}
 		return layout.Inset{Left: infoTextX, Right: 46, Top: 10, Bottom: 16}.Layout(gtx, func(gtx C) D {
@@ -223,7 +223,7 @@ func (u *UI) infoSection(title string, rule bool) layout.Widget {
 		p := u.pal
 		return layout.Inset{Left: infoPadX, Right: 30, Top: 14, Bottom: 6}.Layout(gtx, func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(u.label(15, title, p.TextSecondary, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+				layout.Rigid(u.label(15, u.locale.Text(title), p.TextSecondary, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
 				layout.Rigid(func(gtx C) D {
 					if !rule {
 						return D{}
@@ -251,8 +251,8 @@ func (u *UI) businessHours(gtx C, biz *model.Business) D {
 			word, col = "Open now", p.Green
 		}
 		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-			layout.Flexed(1, u.label(16, word, col, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
-			layout.Rigid(u.label(16, dayHours(st.today), p.Text, labelOpts{maxLines: 1}).Layout),
+			layout.Flexed(1, u.label(16, u.locale.Text(word), col, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+			layout.Rigid(u.label(16, u.locale.Text(dayHours(st.today)), p.Text, labelOpts{maxLines: 1}).Layout),
 			layout.Rigid(layout.Spacer{Width: 14}.Layout),
 			layout.Rigid(func(gtx C) D {
 				if !u.info.allHours {
@@ -282,8 +282,8 @@ func (u *UI) businessHours(gtx C, biz *model.Business) D {
 				children = append(children, layout.Rigid(func(gtx C) D {
 					return layout.Inset{Top: 8, Right: 38}.Layout(gtx, func(gtx C) D {
 						return layout.Flex{}.Layout(gtx,
-							layout.Flexed(1, u.label(15.5, day.String(), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
-							layout.Rigid(u.label(15.5, dayHours(h), p.TextSecondary, labelOpts{maxLines: 1, align: text.End}).Layout),
+							layout.Flexed(1, u.label(15.5, u.locale.Text(day.String()), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
+							layout.Rigid(u.label(15.5, u.locale.Text(dayHours(h)), p.TextSecondary, labelOpts{maxLines: 1, align: text.End}).Layout),
 						)
 					})
 				}))

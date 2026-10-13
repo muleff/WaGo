@@ -597,3 +597,10 @@ func (a *Backend) PostStatus(p model.StatusPost) {
 		a.Backend.PostStatus(p)
 	}
 }
+
+// Resume forwards platform lifecycle recovery without resetting the session.
+func (b *Backend) Resume() {
+	if r, ok := b.Backend.(interface{ Resume() }); ok {
+		r.Resume()
+	}
+}

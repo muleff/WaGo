@@ -49,3 +49,12 @@ func dateChip(t, now time.Time) string {
 		return t.Format("2 January 2006")
 	}
 }
+
+// calendarText localizes application-generated calendar tokens, never messages.
+func (u *UI) calendarText(value string) string {
+	words := strings.Split(value, " ")
+	for i, w := range words {
+		words[i] = u.locale.Text(w)
+	}
+	return strings.Join(words, " ")
+}

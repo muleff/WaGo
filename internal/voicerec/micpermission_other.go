@@ -1,5 +1,7 @@
-//go:build !windows
+//go:build !windows && !android
 
 package voicerec
 
-func microphonePermission() error { return nil }
+import "context"
+
+func microphonePermission(ctx context.Context) error { return nil }

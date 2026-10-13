@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"image"
 	"image/png"
+	"mime"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -87,6 +89,7 @@ type pickResult struct {
 	chatID string
 	files  []model.Attachment
 	temp   bool // files the app wrote (pasted pictures)
+	picked bool // result from the file picker, including cancel/error
 	err    error
 }
 
@@ -168,20 +171,10 @@ func (u *UI) pickFiles(chatID, title string, filters []filepick.Filter) {
 		filters = append(filters, filepick.Filter{Name: "All files"})
 	}
 	go func() {
-		paths, err := filepick.Open(title, true, filters...)
-		r := pickResult{chatID: chatID, err: err}
-		for _, p := range paths {
-			media := model.MediaDocument
-			switch {
-			case asDocs:
-			case hasExt(p, photoExts):
-				media = model.MediaImage
-			case hasExt(p, videoExts):
-				media = model.MediaVideo
-			case hasExt(p, audioExts):
-				media = model.MediaAudio
-			}
-			r.files = append(r.files, model.Attachment{Path: p, Media: media})
+		files, err := filepick.OpenSelection(title, true, filters...)
+		r := pickResult{chatID: chatID, err: err, picked: true, temp: runtime.GOOS == "android"}
+		for _, f := range files {
+			r.files = append(r.files, classifySelection(f, asDocs))
 		}
 		results <- r
 		if notify != nil {
@@ -195,14 +188,14 @@ func (u *UI) updateAttach() {
 	a := &u.attach
 	select {
 	case r := <-a.results:
-		if !r.temp {
+		if r.picked || !r.temp {
 			a.picking = false
 		}
 		switch {
 		case r.err == filepick.ErrUnsupported:
 			u.toast("No file dialog found. Install zenity or kdialog to attach files.")
 		case r.err != nil:
-			u.toast("Couldn't open the file dialog: " + r.err.Error())
+			u.toast(u.locale.Textf("Could not open attachments: %s", r.err.Error()))
 		default:
 			files := make([]*attachFile, len(r.files))
 			for i, f := range r.files {
@@ -888,4 +881,26 @@ func (u *UI) pollLine(gtx C, ed *widget.Editor, hint string, bad bool) D {
 	}
 	fillRect(gtx, image.Rect(0, dims.Size.Y-line, dims.Size.X, dims.Size.Y), col)
 	return dims
+}
+
+func classifySelection(f filepick.Selection, asDocs bool) model.Attachment {
+	typ, _, _ := mime.ParseMediaType(f.MIME)
+	media := model.MediaDocument
+	if !asDocs {
+		switch {
+		case strings.HasPrefix(typ, "image/"):
+			media = model.MediaImage
+		case strings.HasPrefix(typ, "video/"):
+			media = model.MediaVideo
+		case strings.HasPrefix(typ, "audio/"):
+			media = model.MediaAudio
+		case hasExt(f.Path, photoExts):
+			media = model.MediaImage
+		case hasExt(f.Path, videoExts):
+			media = model.MediaVideo
+		case hasExt(f.Path, audioExts):
+			media = model.MediaAudio
+		}
+	}
+	return model.Attachment{Path: f.Path, Name: f.Name, MIME: typ, Media: media}
 }

@@ -25,6 +25,8 @@ func openURL(link string) bool {
 func openTarget(target string) bool {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
+	case "android":
+		return openAndroidTarget(target)
 	case "windows":
 		cmd = exec.Command("cmd", "/c", "start", "", target)
 	case "darwin":

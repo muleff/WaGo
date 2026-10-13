@@ -48,6 +48,9 @@ func (l *Localizer) Language() string { return l.language }
 
 // Text translates a string without formatting arguments.
 func (l *Localizer) Text(msgid string) string {
+	if msgid == "" {
+		return ""
+	}
 	translations := l.catalogs[l.language].GetDomain().GetTranslations()
 	if translation := translations[msgid]; translation != nil && translation.IsTranslated() {
 		return translation.Get()

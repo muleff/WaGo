@@ -120,6 +120,9 @@ func (u *UI) channelRow(gtx C, ch *model.Channel) D {
 	c := channelChat(ch)
 	click := u.btn("channel:" + ch.ID)
 	if click.Clicked(gtx) {
+		if u.mobile && u.page == pageStatus {
+			u.setPage(pageChannels)
+		}
 		u.open(c)
 		ch.Unread = 0
 	}
@@ -145,7 +148,7 @@ func (u *UI) suggestedRow(gtx C, ch *model.Channel) D {
 					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.nameWithBadge(gtx, ch.Name, 17.5, p.Text, ch.Verified) }),
 						layout.Rigid(layout.Spacer{Height: 2}.Layout),
-						layout.Rigid(u.label(15.3, followers(ch.Followers), p.TextSecondary).Layout),
+						layout.Rigid(u.label(15.3, u.channelFollowers(ch.Followers), p.TextSecondary).Layout),
 					)
 				}),
 				layout.Rigid(layout.Spacer{Width: 12}.Layout),
@@ -160,7 +163,7 @@ func (u *UI) suggestedRow(gtx C, ch *model.Channel) D {
 						fillRRect(gtx, image.Rectangle{Max: sz}, sz.Y/2, bg)
 						gtx.Constraints = layout.Exact(sz)
 						return layout.Center.Layout(gtx,
-							u.label(15, "Follow", p.ChipActiveText, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
+							u.label(15, u.locale.Text("Follow"), p.ChipActiveText, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
 					})
 				}),
 			)
@@ -203,4 +206,12 @@ func (u *UI) searchBox(gtx C, e *widget.Editor, hint string) D {
 			})
 		})
 	})
+}
+
+func (u *UI) channelFollowers(n int) string {
+	v := followers(n)
+	if strings.HasSuffix(v, " followers") {
+		return u.locale.Textf("%s followers", strings.TrimSuffix(v, " followers"))
+	}
+	return u.locale.Text(v)
 }

@@ -1,0 +1,34 @@
+--- a/gogio/androidbuild.go
++++ b/gogio/androidbuild.go
+@@ -462,6 +462,10 @@
+     </queries>
+ 	{{end}}
+ 	<uses-sdk android:minSdkVersion="{{.MinSDK}}" android:targetSdkVersion="{{.TargetSDK}}" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_REMOTE_MESSAGING" />
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
+ {{range .Permissions}}	<uses-permission android:name="{{.}}"/>
+ {{end}}{{range .Features}}	<uses-feature android:{{.}} android:required="false"/>
+ {{end}}	<application {{.IconSnip}} android:label="{{.AppName}}">
+@@ -470,7 +474,7 @@
+ 			android:theme="@style/Theme.GioApp"
+ 			android:configChanges="screenSize|screenLayout|smallestScreenSize|orientation|keyboardHidden"
+ 			android:windowSoftInputMode="adjustResize"
+-			android:launchMode="singleInstance"
++			android:launchMode="singleTop"
+ 			android:exported="true">
+ 			<intent-filter>
+ 				<action android:name="android.intent.action.MAIN" />
+@@ -485,6 +489,11 @@
+ 			</intent-filter>
+ 			{{end}}
+ 		</activity>
++        <provider android:name="org.gioui.WaGoProvider"
++            android:authorities="{{.AppID}}.media"
++            android:exported="false" android:grantUriPermissions="true" />
++        <service android:name="org.gioui.WaGoConnectionService"
++            android:exported="false" android:foregroundServiceType="remoteMessaging|dataSync" />
+ 	</application>
+ </manifest>`)
+ 	var manifestBuffer bytes.Buffer

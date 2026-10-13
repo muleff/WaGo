@@ -225,6 +225,9 @@ func clickable(gtx C, c *widget.Clickable, w layout.Widget) D {
 
 // iconButton is a round, hover-highlighted icon button of size box dp.
 func (u *UI) iconButton(gtx C, c *widget.Clickable, ic *icon.Icon, box, size unit.Dp, col color.NRGBA) D {
+	if u.mobile {
+		box = max(box, 48)
+	}
 	return clickable(gtx, c, func(gtx C) D {
 		sz := gtx.Dp(box)
 		if h := u.hover(gtx, c); h > 0 {

@@ -658,6 +658,8 @@ func (b *Backend) SaveMedia(m *model.Message) {
 func openFile(path string) error {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
+	case "android":
+		return openAndroidFile(path)
 	case "windows":
 		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", path)
 	case "darwin":

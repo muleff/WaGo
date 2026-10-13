@@ -596,7 +596,7 @@ func (u *UI) galleryRow(gtx C, m *model.Message) D {
 						return layout.Flex{Axis: layout.Vertical, Alignment: layout.End}.Layout(gtx,
 							layout.Rigid(u.label(14, where, p.TextSecondary, labelOpts{maxLines: 1, align: text.End}).Layout),
 							layout.Rigid(layout.Spacer{Height: 3}.Layout),
-							layout.Rigid(u.label(13, listTime(m.Time, u.now()), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
+							layout.Rigid(u.label(13, u.calendarText(listTime(m.Time, u.now())), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
 						)
 					}),
 				)

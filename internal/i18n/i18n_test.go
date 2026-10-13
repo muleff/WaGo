@@ -18,3 +18,27 @@ func TestLocalizerLanguagesAndFallback(t *testing.T) {
 		t.Fatalf("Spanish fallback translation = %q, want %q", got, "Idioma")
 	}
 }
+
+func TestAndroidContactAndNavigationCopy(t *testing.T) {
+	l := New("es")
+	for _, key := range []string{"Updates", "Starred messages", "Notification settings", "Advanced chat privacy", "Media, links and docs", "Recording…", "Microphone access was denied. Enable it in Android settings."} {
+		if got := l.Text(key); got == key {
+			t.Errorf("missing Spanish: %s", key)
+		}
+	}
+}
+
+func TestSpanishMobileLinkingInstructions(t *testing.T) {
+	l := New("es")
+	for _, key := range []string{"Link your WhatsApp", "Your 8-character code", "Enter this code in WhatsApp on your phone: %s", "Country code", "Resend code"} {
+		if l.Text(key) == key {
+			t.Errorf("untranslated linking instruction: %s", key)
+		}
+	}
+}
+
+func TestEmptyTextDoesNotExposeCatalogHeader(t *testing.T) {
+	if got := New("es").Text(""); got != "" {
+		t.Fatalf("empty text exposed catalog: %q", got)
+	}
+}

@@ -736,6 +736,7 @@ func (u *UI) setLanguage(lang string) {
 		lang = u.locale.SetLanguage(lang)
 	}
 	u.language = lang
+	u.msgsVer++ // date rows cache includes locale-dependent copy
 	u.backend.SetPref(prefLanguage, lang)
 	u.settings.stale = true
 }

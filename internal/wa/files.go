@@ -237,7 +237,7 @@ func (b *Backend) SendFile(chatID string, a model.Attachment, d model.Draft) *mo
 		b.emit(model.NoticeEvent{Text: "Couldn't read " + filepath.Base(a.Path) + "."})
 		return nil
 	}
-	name := filepath.Base(a.Path)
+	name := first(a.Name, filepath.Base(a.Path))
 	m := &model.Message{
 		ID:       cli.GenerateMessageID(),
 		ChatID:   chatID,
@@ -307,6 +307,10 @@ func (b *Backend) SendFile(chatID string, a model.Attachment, d model.Draft) *mo
 	} else if st.Size() <= maxLocalCopy {
 		up.copyTo(b.mediaFilePath(payloadView(m, msg)))
 	}
+	if err := up.holdSource(); err != nil {
+		b.emit(model.NoticeEvent{Text: "Couldn't read " + name + "."})
+		return nil
+	}
 	ctx := b.ctx
 	if err := b.store.ensureChat(ctx, b.db, chatID, jid.Server == types.GroupServer, ""); err != nil {
 		b.log.Errorf("store chat %s: %v", chatID, err)
@@ -325,6 +329,12 @@ func (b *Backend) SendFile(chatID string, a model.Attachment, d model.Draft) *mo
 
 // fileType is the MIME type a file is sent with.
 func fileType(a model.Attachment) string {
+	if a.Media == model.MediaVoice {
+		return "audio/ogg; codecs=opus"
+	}
+	if typ, _, err := mime.ParseMediaType(a.MIME); err == nil && typ != "" {
+		return typ
+	}
 	ext := strings.ToLower(filepath.Ext(a.Path))
 	switch ext {
 	case ".mp3":
@@ -350,11 +360,12 @@ func fileType(a model.Attachment) string {
 // upload is a file on its way out. Photos are read, scaled and compressed
 // up front (see photo.Prepare); anything else streams from disk.
 type upload struct {
-	path  string
-	data  []byte // the photo to send
-	png   bool
-	thumb []byte
-	w, h  int
+	source *os.File // held before the UI can unlink a picker-owned copy
+	path   string
+	data   []byte // the photo to send
+	png    bool
+	thumb  []byte
+	w, h   int
 }
 
 func (up *upload) prepareImage(q model.Quality) error {
@@ -378,11 +389,21 @@ func (up *upload) keep(path string) {
 
 // copyTo copies the file to path.
 func (up *upload) copyTo(path string) {
-	src, err := os.Open(up.path)
-	if err != nil {
-		return
+	var src io.Reader
+	if up.source != nil {
+		st, err := up.source.Stat()
+		if err != nil {
+			return
+		}
+		src = io.NewSectionReader(up.source, 0, st.Size())
+	} else {
+		f, err := os.Open(up.path)
+		if err != nil {
+			return
+		}
+		defer f.Close()
+		src = f
 	}
-	defer src.Close()
 	_ = os.MkdirAll(filepath.Dir(path), 0o700)
 	dst, err := os.OpenFile(path+".part", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
@@ -400,6 +421,22 @@ func (up *upload) copyTo(path string) {
 	}
 }
 
+func (up *upload) holdSource() error {
+	if up.data != nil {
+		return nil
+	}
+	f, err := os.Open(up.path)
+	if err == nil {
+		up.source = f
+	}
+	return err
+}
+func (up *upload) closeSource() {
+	if up.source != nil {
+		_ = up.source.Close()
+	}
+}
+
 // mediaTypes maps how a file is sent to the key WhatsApp encrypts it with.
 var mediaTypes = map[model.Media]whatsmeow.MediaType{
 	model.MediaImage:    whatsmeow.MediaImage,
@@ -412,6 +449,7 @@ var mediaTypes = map[model.Media]whatsmeow.MediaType{
 // uploadAndSend uploads the file of a stored pending message, msg, then
 // sends it.
 func (b *Backend) uploadAndSend(jid types.JID, m *model.Message, up upload, msg *waE2E.Message, inner proto.Message) {
+	defer up.closeSource()
 	fail := func(err error) {
 		b.log.Errorf("send file %s to %s: %v", m.FileName, m.ChatID, err)
 		b.sendFailed(m.ChatID, m.ID, "Couldn't send "+m.FileName+".")
@@ -439,6 +477,9 @@ func (b *Backend) uploadAndSend(jid types.JID, m *model.Message, up upload, msg 
 func (up *upload) push(ctx context.Context, cli *whatsmeow.Client, media model.Media) (whatsmeow.UploadResponse, error) {
 	if up.data != nil {
 		return cli.Upload(ctx, up.data, mediaTypes[media])
+	}
+	if up.source != nil {
+		return uploadReader(ctx, cli, up.source, mediaTypes[media])
 	}
 	return uploadFile(ctx, cli, up.path, mediaTypes[media])
 }
@@ -530,6 +571,9 @@ func uploadFile(ctx context.Context, cli *whatsmeow.Client, path string, mt what
 		return whatsmeow.UploadResponse{}, err
 	}
 	defer f.Close()
+	return uploadReader(ctx, cli, f, mt)
+}
+func uploadReader(ctx context.Context, cli *whatsmeow.Client, f io.Reader, mt whatsmeow.MediaType) (whatsmeow.UploadResponse, error) {
 	tmp, err := os.CreateTemp("", "wazzap-upload-*")
 	if err != nil {
 		return whatsmeow.UploadResponse{}, err
@@ -754,4 +798,12 @@ func mp3Seconds(path string, size int64) int {
 		}
 	}
 	return 0
+}
+
+func externalMediaType(path string) string {
+	typ, _, err := mime.ParseMediaType(mime.TypeByExtension(filepath.Ext(path)))
+	if err != nil || typ == "" {
+		return "application/octet-stream"
+	}
+	return typ
 }

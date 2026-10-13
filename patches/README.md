@@ -1,5 +1,13 @@
 # Dependency patches
 
+## Android integration
+
+`apply.sh` also invokes `android/apply.sh`, copying pinned Gio and gogio into
+`third_party/gio` and `third_party/gogio`. It adds activity callbacks, the
+bridge/provider/connection service and corresponding APK manifest declarations.
+Install the Android packager with `(cd third_party/gogio && go install ./gogio)`;
+upstream gogio omits these declarations. Refresh patches when upgrading Gio.
+
 `typesetting.patch` patches go-text (`github.com/go-text/typesetting`, Gio's
 text library) to use far less memory for fonts. `go.mod` replaces the module
 with `third_party/typesetting`, which `apply.sh` builds from the Go module

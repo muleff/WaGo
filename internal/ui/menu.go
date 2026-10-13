@@ -27,6 +27,10 @@ type menuState struct {
 
 func (u *UI) updateMenu(gtx C) {
 	m := &u.menu
+	if u.btn("mobile:menu:settings").Clicked(gtx) {
+		u.setPage(pageSettings)
+		m.open = false
+	}
 	if m.newGroup.Clicked(gtx) {
 		u.openNewGroup(nil)
 		m.open = false
@@ -101,6 +105,9 @@ func (u *UI) layoutMenu(gtx C) {
 		{click: &m.starred, label: u.locale.Text("ui.messages.starred"), ic: icStar},
 		{click: &m.readAll, label: u.locale.Text("ui.chats.mark_all_read"), ic: icChats},
 		{divider: true},
+	}
+	if u.mobile {
+		items = append(items, menuEntry{click: u.btn("mobile:menu:settings"), label: u.locale.Text("Settings"), ic: icSettings})
 	}
 	switchY := -1 // the Switch account row's top, below the menu's padding
 	if len(u.accounts) > 0 {

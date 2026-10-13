@@ -918,6 +918,16 @@ func (u *UI) layoutPlaceholder(gtx C) D {
 // about 30% of the window like WhatsApp's. The panel slides in from the
 // right edge while the conversation narrows.
 func (u *UI) layoutWithInfo(gtx C) D {
+	if u.mobile {
+		switch {
+		case u.msgInfo.open:
+			return u.layoutMsgInfo(gtx)
+		case u.search.open:
+			return u.layoutChatSearch(gtx)
+		case u.info.open:
+			return u.layoutInfo(gtx)
+		}
+	}
 	sz := gtx.Constraints.Max
 	open, panel, anim := u.info.open, u.layoutInfo, &u.info.anim
 	if u.search.shown() {
@@ -958,13 +968,17 @@ func (u *UI) layoutWithInfo(gtx C) D {
 
 // update handles input events before anything is drawn.
 func (u *UI) update(gtx C) {
+	u.pollSystemOpen()
 	u.updateVoiceRecord()
-	if u.mobile {
-		// Gio's Android activity finishes when Back is not consumed. Keep the
-		// window alive; Android's Home/app switcher still backgrounds it normally.
+	if u.mobile && u.mobileHasBack() {
+		// Consume Back only while an in-app navigation action exists.
 		for {
-			if _, ok := gtx.Event(key.Filter{Name: key.NameBack}); !ok {
+			ev, ok := gtx.Event(key.Filter{Name: key.NameBack})
+			if !ok {
 				break
+			}
+			if e, ok := ev.(key.Event); ok && e.State == key.Press {
+				u.mobileBack()
 			}
 		}
 	}
@@ -1027,7 +1041,7 @@ func (u *UI) update(gtx C) {
 		}
 	}
 	if u.mobile && u.conv.back.Clicked(gtx) {
-		u.closeChat()
+		u.mobileBack()
 	}
 	searchKey := false
 	for {
@@ -1186,6 +1200,14 @@ func (u *UI) escape() {
 		default:
 			u.closeSendView(false)
 		}
+	case u.info.open:
+		if u.info.sub != "" {
+			u.closeInfoSub()
+		} else if len(u.info.back) > 0 {
+			u.infoBack()
+		} else {
+			u.info.open = false
+		}
 	case u.search.open:
 		u.search.open = false
 	case u.msgInfo.open:
@@ -1273,7 +1295,7 @@ func (u *UI) applyEvents() {
 			if e.Text == auto.GhostText {
 				u.toast(u.locale.Text("ghost.mode.refused"))
 			} else {
-				u.toast(e.Text)
+				u.toast(u.locale.Text(e.Text))
 			}
 		case model.PhoneEvent:
 			if !u.cardPhoneEvent(e) {

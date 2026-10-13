@@ -113,6 +113,8 @@ func Run(b model.Backend, o Options) error {
 	if !o.Hidden || !h.tray {
 		h.openWindow()
 	}
+	unregister := registerMobileLifecycle(h)
+	defer unregister()
 	b.Start(h.poke)
 	for {
 		select {
@@ -216,8 +218,9 @@ const (
 	reqActivate                  // a notification or one of its buttons
 	reqSwitch                    // open another account
 	reqAddAccount                // link a new account
-	reqRedraw                    // an update moved on: show it
-	reqRestart                   // an update is in place: start it and quit
+	reqResume
+	reqRedraw  // an update moved on: show it
+	reqRestart // an update is in place: start it and quit
 )
 
 // linkStash is the linking form a window was showing: the typed number,
@@ -310,6 +313,10 @@ func (h *host) uiEvents() []model.Event {
 // handle serves a request. It reports whether the app should quit now.
 func (h *host) handle(r request) bool {
 	switch r.kind {
+	case reqResume:
+		if r, ok := h.b.(interface{ Resume() }); ok {
+			r.Resume()
+		}
 	case reqShow:
 		h.show()
 	case reqQuit:
@@ -470,6 +477,9 @@ func (h *host) windowEvent(e event.Event) (closed bool, err error) {
 				u.stopOutgoingTyping()
 			}
 			if f {
+				if h.o.Mobile {
+					h.request(request{kind: reqResume})
+				}
 				h.away.Stop()
 			} else {
 				h.away.Reset(awayTrim)

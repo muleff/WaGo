@@ -95,10 +95,16 @@ func (b *Backend) PostStatus(p model.StatusPost) {
 	}
 	st.c.media, st.c.thumb, st.c.duration = a.Media, m.Thumb, m.Duration
 	st.c.file.Type = m.FileType
+	if err := up.holdSource(); err != nil {
+		b.statusFailed(st.id, err)
+		return
+	}
 	if !b.storeStatus(st) {
+		up.closeSource()
 		return
 	}
 	go func() {
+		defer up.closeSource()
 		if m.Media == model.MediaVideo || m.Media == model.MediaAudio || m.Media == model.MediaVoice {
 			if st, err := os.Stat(a.Path); err == nil && st.Size() <= maxLocalCopy {
 				// Your own update plays without a download. Copied here,

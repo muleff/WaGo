@@ -1454,3 +1454,335 @@ msgstr "el texto modificado"
 
 msgid "command.replicate"
 msgstr "Replica un mensaje que otra persona envio, eliminando el mensaje original"
+msgid "Updates"
+msgstr "Novedades"
+
+msgid "Viewed"
+msgstr "Vistos"
+
+msgid "Starred messages"
+msgstr "Mensajes destacados"
+
+msgid "Notification settings"
+msgstr "Ajustes de notificaciones"
+
+msgid "Advanced chat privacy"
+msgstr "Privacidad avanzada del chat"
+
+msgid "Media, links and docs"
+msgstr "Archivos, enlaces y documentos"
+
+msgid "On"
+msgstr "Activado"
+
+msgid "Share"
+msgstr "Compartir"
+
+msgid "About and phone number"
+msgstr "Información y número de teléfono"
+
+msgid "Encryption"
+msgstr "Cifrado"
+
+msgid "Messages are end-to-end encrypted. Click to verify."
+msgstr "Los mensajes están cifrados de extremo a extremo. Toca para verificar."
+
+msgid "Recording…"
+msgstr "Grabando…"
+
+msgid "Microphone access was denied. Enable it in Android settings."
+msgstr "Se denegó el acceso al micrófono. Actívalo en los ajustes de Android."
+
+msgid "Record at least one second of audio."
+msgstr "Graba al menos un segundo de audio."
+
+msgid "Microphone capture stopped unexpectedly."
+msgstr "La grabación se detuvo inesperadamente."
+
+msgid "Microphone recording requires an active app window."
+msgstr "Abre la aplicación para grabar una nota de voz."
+
+msgid "Could not record audio: %s"
+msgstr "No se pudo grabar el audio: %s"
+
+msgid "Follow channels to see their updates here."
+msgstr "Sigue canales para ver sus novedades aquí."
+
+msgid "Follow"
+msgstr "Seguir"
+
+msgid "Discover more"
+msgstr "Descubrir más"
+
+msgid "Find channels to follow"
+msgstr "Encuentra canales para seguir"
+
+msgid "Channel"
+msgstr "Canal"
+
+msgid "1 follower"
+msgstr "1 seguidor"
+
+msgid "%s followers"
+msgstr "%s seguidores"
+
+msgid "Today"
+msgstr "Hoy"
+
+msgid "Yesterday"
+msgstr "Ayer"
+
+msgid "Monday"
+msgstr "lunes"
+
+msgid "Tuesday"
+msgstr "martes"
+
+msgid "Wednesday"
+msgstr "miércoles"
+
+msgid "Thursday"
+msgstr "jueves"
+
+msgid "Friday"
+msgstr "viernes"
+
+msgid "Saturday"
+msgstr "sábado"
+
+msgid "Sunday"
+msgstr "domingo"
+
+msgid "January"
+msgstr "enero"
+
+msgid "February"
+msgstr "febrero"
+
+msgid "March"
+msgstr "marzo"
+
+msgid "April"
+msgstr "abril"
+
+msgid "May"
+msgstr "mayo"
+
+msgid "June"
+msgstr "junio"
+
+msgid "July"
+msgstr "julio"
+
+msgid "August"
+msgstr "agosto"
+
+msgid "September"
+msgstr "septiembre"
+
+msgid "October"
+msgstr "octubre"
+
+msgid "November"
+msgstr "noviembre"
+
+msgid "December"
+msgstr "diciembre"
+
+msgid "Group permissions"
+msgstr "Permisos del grupo"
+
+msgid "No members found"
+msgstr "No se encontraron miembros"
+
+msgid "See member changes"
+msgstr "Ver cambios de miembros"
+
+msgid "Report group"
+msgstr "Reportar grupo"
+
+msgid "Invite to group via link"
+msgstr "Invitar al grupo mediante enlace"
+
+msgid "Invite to group via email"
+msgstr "Invitar al grupo por correo"
+
+msgid "Business account"
+msgstr "Cuenta de empresa"
+
+msgid "Business details"
+msgstr "Detalles de la empresa"
+
+msgid "Business hours"
+msgstr "Horario de la empresa"
+
+msgid "Open now"
+msgstr "Abierto ahora"
+
+msgid "Closed now"
+msgstr "Cerrado ahora"
+
+msgid "Choose documents"
+msgstr "Elegir documentos"
+
+msgid "Choose photos and videos"
+msgstr "Elegir fotos y videos"
+
+msgid "Choose audio"
+msgstr "Elegir audio"
+
+msgid "Audio"
+msgstr "Audio"
+
+msgid "All files"
+msgstr "Todos los archivos"
+
+msgid "Could not open attachments: %s"
+msgstr "No se pudieron abrir los archivos: %s"
+
+msgid "This audio can't play here. Opening it in your audio player…"
+msgstr "Abriendo el audio en el reproductor del dispositivo…"
+
+msgid "Couldn't find an app to open this file."
+msgstr "No se encontró una aplicación para abrir este archivo."
+
+msgid "Add group to a community"
+msgstr "Añadir grupo a una comunidad"
+
+msgid "Block "
+msgstr "Bloquear "
+
+msgid "Bring members together in topic-based groups"
+msgstr "Reúne a los miembros en grupos por temas"
+
+msgid "Create a similar group"
+msgstr "Crear un grupo similar"
+
+msgid "Deleted"
+msgstr "Eliminado"
+
+msgid "Group · "
+msgstr "Grupo · "
+
+msgid "Group"
+msgstr "Grupo"
+
+msgid "Messages are end-to-end encrypted. Click to learn more."
+msgstr "Los mensajes están cifrados de extremo a extremo. Toca para saber más."
+
+msgid "No member changes yet. Changes show here from when this computer sees them."
+msgstr "Todavía no hay cambios de miembros. Aquí aparecerán los que reciba este dispositivo."
+
+msgid "Opening video…"
+msgstr "Abriendo video…"
+
+msgid "Reply sent"
+msgstr "Respuesta enviada"
+
+msgid "Start with the same members. You can add or remove people."
+msgstr "Empieza con los mismos miembros. Puedes añadir o quitar personas."
+
+msgid "That chat isn't in your chat list."
+msgstr "Ese chat no está en tu lista."
+
+msgid "This is a business account."
+msgstr "Esta es una cuenta de empresa."
+
+msgid "This video can't play here. Press play to open it in your video player."
+msgstr "Toca reproducir para abrir el video en el reproductor del dispositivo."
+
+msgid "Unblock "
+msgstr "Desbloquear "
+
+msgid "You are no longer a member"
+msgstr "Ya no eres miembro"
+
+msgid "Preparing microphone…"
+msgstr "Preparando micrófono…"
+
+msgid "Sending recording…"
+msgstr "Enviando grabación…"
+
+msgid "● Recording  %d:%02d"
+msgstr "● Grabando  %d:%02d"
+
+msgid "Voice"
+msgstr "Llamada"
+
+msgid "Video"
+msgstr "Video"
+
+msgid "Add"
+msgstr "Añadir"
+
+msgid "90 days"
+msgstr "90 días"
+
+msgid "7 days"
+msgstr "7 días"
+
+msgid "%d members"
+msgstr "%d miembros"
+
+msgid "1 member"
+msgstr "1 miembro"
+
+msgid "Open"
+msgstr "Abierto"
+
+msgid "Closed"
+msgstr "Cerrado"
+
+msgid "Open 24 hours"
+msgstr "Abierto las 24 horas"
+
+msgid "Closed all day"
+msgstr "Cerrado todo el día"
+
+msgid "1 group in common"
+msgstr "1 grupo en común"
+
+msgid "%d groups in common"
+msgstr "%d grupos en común"
+
+msgid "Other business"
+msgstr "Otros negocios"
+
+msgid "Waiting for connection. Your draft is saved."
+msgstr "Esperando conexión. Tu borrador está guardado."
+
+msgid "No app is available to open this link."
+msgstr "No hay una aplicación disponible para abrir este enlace."
+
+msgid "Link your WhatsApp"
+msgstr "Vincula tu WhatsApp"
+
+msgid "Enter the phone number connected to your WhatsApp account. We'll use it to prepare this device for linking."
+msgstr "Introduce el número de tu cuenta de WhatsApp para vincular este dispositivo."
+
+msgid "Country code"
+msgstr "Código de país"
+
+msgid "After you continue, follow the instructions in WhatsApp on your primary phone."
+msgstr "Después de continuar, sigue las instrucciones de WhatsApp en tu teléfono principal."
+
+msgid "Back to QR code"
+msgstr "Volver al código QR"
+
+msgid "Your 8-character code"
+msgstr "Tu código de 8 caracteres"
+
+msgid "Enter this code in WhatsApp on your phone: %s"
+msgstr "Introduce este código en WhatsApp en tu teléfono: %s"
+
+msgid "The code contains eight letters or numbers."
+msgstr "El código contiene ocho letras o números."
+
+msgid "Change phone number"
+msgstr "Cambiar número de teléfono"
+
+msgid "Resend code"
+msgstr "Solicitar otro código"
+
+msgid "Connecting..."
+msgstr "Conectando..."

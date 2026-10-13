@@ -101,15 +101,18 @@ func startNative(ctx context.Context) (*Recorder, error) {
 	}
 	go func() {
 		defer close(r.done)
-		defer device.Stop()
-		defer device.Uninit()
-		defer mctx.Uninit()
-		defer mctx.Free()
-		defer f.Close()
+		defer func() {
+			device.Stop()
+			enc.Close()
+			device.Uninit()
+			mctx.Uninit()
+			mctx.Free()
+			f.Close()
+		}()
 		for {
 			select {
 			case <-ctx.Done():
-				if err := enc.Close(); err != nil {
+				if err := finishPCM(func() { device.Stop() }, frames, enc); err != nil {
 					r.mu.Lock()
 					r.err = err
 					r.mu.Unlock()

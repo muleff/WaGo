@@ -38,7 +38,7 @@ type Recorder struct {
 func Start(ctx context.Context) (*Recorder, error) {
 	resetCaptureDiagnostics()
 	captureDebug("Starting microphone detection")
-	if err := microphonePermission(); err != nil {
+	if err := microphonePermission(ctx); err != nil {
 		captureDebug("Windows microphone privacy check: %v", err)
 		return nil, err
 	}

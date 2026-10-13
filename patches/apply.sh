@@ -27,3 +27,5 @@ cp -R "$src" "$dst"
 chmod -R u+w "$dst"
 patch -s -p1 -d "$dst" < patches/typesetting.patch
 echo "patched $module $version into $dst"
+
+sh patches/android/apply.sh

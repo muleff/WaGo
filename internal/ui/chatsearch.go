@@ -193,7 +193,7 @@ func (u *UI) searchResult(gtx C, c *model.Chat, m *model.Message, q string) D {
 			return background(gtx, bg, 10, func(gtx C) D {
 				return layout.Inset{Left: 14, Right: 14, Top: 11, Bottom: 12}.Layout(gtx, func(gtx C) D {
 					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-						layout.Rigid(u.label(13.5, listTime(m.Time, u.now()), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
+						layout.Rigid(u.label(13.5, u.calendarText(listTime(m.Time, u.now())), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
 						layout.Rigid(layout.Spacer{Height: 4}.Layout),
 						layout.Rigid(func(gtx C) D { return u.searchResultText(gtx, c, m, q) }),
 					)

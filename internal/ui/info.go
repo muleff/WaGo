@@ -169,6 +169,9 @@ func (u *UI) layoutInfo(gtx C) D {
 		rows = u.infoRows(gtx, c, info)
 	}
 	closeIc := icClose
+	if u.mobile {
+		closeIc = icBack
+	}
 	if len(u.info.back) > 0 || u.info.sub != "" {
 		closeIc = icBack
 	}
@@ -186,7 +189,7 @@ func (u *UI) layoutInfo(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.info.closeBtn, closeIc, 40, 25, p.IconStrong) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
-						layout.Flexed(1, u.label(16.5, title, p.Text, labelOpts{maxLines: 1}).Layout),
+						layout.Flexed(1, u.label(16.5, u.locale.Text(title), p.Text, labelOpts{maxLines: 1}).Layout),
 					)
 				})
 			})
@@ -241,27 +244,27 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 		disappearing = durationLabel(d)
 	}
 	rows = append(rows,
-		item("starred", listItem{ic: icStar, title: "Starred messages"}),
+		item("starred", listItem{ic: icStar, title: u.locale.Text("Starred messages")}),
 		u.infoNotifRow(c, "All messages"),
-		item("encryption", listItem{ic: icLockOutline, title: "Encryption", sub: "Messages are end-to-end encrypted. Click to learn more."}),
-		item("disappearing", listItem{glyph: disappearingIcon, title: "Disappearing messages", sub: disappearing}),
-		item("privacy", listItem{ic: icShield, title: "Advanced chat privacy", sub: "Off"}),
+		item("encryption", listItem{ic: icLockOutline, title: u.locale.Text("Encryption"), sub: u.locale.Text("Messages are end-to-end encrypted. Click to learn more.")}),
+		item("disappearing", listItem{glyph: disappearingIcon, title: u.locale.Text("Disappearing messages"), sub: disappearing}),
+		item("privacy", listItem{ic: icShield, title: u.locale.Text("Advanced chat privacy"), sub: u.locale.Text("Off")}),
 	)
 	admin := u.isAdminIn(info)
 	if admin && !c.Exited {
-		rows = append(rows, item("perms", listItem{ic: icSettings, title: "Group permissions"}))
+		rows = append(rows, item("perms", listItem{ic: icSettings, title: u.locale.Text("Group permissions")}))
 	}
 	rows = append(rows, u.infoDivider(12, 3.2))
 	if !c.Exited && u.inCommunity[c.ID] == nil {
 		rows = append(rows, func(gtx C) D {
 			return u.infoCircleRow(gtx, "community", func(gtx C) D {
 				return roundedSquare(gtx, 52, 12, p.Green, icGroupsFill, 32, rgb(0xffffff))
-			}, listItem{title: "Add group to a community", sub: "Bring members together in topic-based groups",
+			}, listItem{title: u.locale.Text("Add group to a community"), sub: u.locale.Text("Bring members together in topic-based groups"),
 				trailing: func(gtx C) D { return layout.Inset{Right: 27}.Layout(gtx, iconW(icChevronRight, 24, p.TextSecondary)) }}, 107)
 		})
 	}
 	rows = append(rows,
-		item("similar", listItem{ic: icGroupAdd, title: "Create a similar group", sub: "Start with the same members. You can add or remove people."}),
+		item("similar", listItem{ic: icGroupAdd, title: u.locale.Text("Create a similar group"), sub: u.locale.Text("Start with the same members. You can add or remove people.")}),
 		func(gtx C) D { return u.infoMembersHeader(gtx, info) },
 	)
 	if chat := u.chatByID(c.ID); chat != nil && u.canAddMembers(chat) {
@@ -278,7 +281,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 		members = filterMembers(members, u.info.memberQuery.Text())
 		if len(members) == 0 {
 			rows = append(rows, func(gtx C) D {
-				return layout.Inset{Left: infoPadX, Top: 14, Bottom: 14}.Layout(gtx, u.label(15, "No members found", p.TextSecondary).Layout)
+				return layout.Inset{Left: infoPadX, Top: 14, Bottom: 14}.Layout(gtx, u.label(15, u.locale.Text("No members found"), p.TextSecondary).Layout)
 			})
 		}
 	} else if !u.info.allMembers && len(members) > infoMembersShown {
@@ -300,23 +303,23 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 	}
 	rows = append(rows,
 		func(gtx C) D { return layout.Spacer{Height: 1}.Layout(gtx) },
-		u.infoRow("changes", listItem{ic: icList, title: "See member changes"}, func() { u.openInfoSub(infoChanges) }),
+		u.infoRow("changes", listItem{ic: icList, title: u.locale.Text("See member changes")}, func() { u.openInfoSub(infoChanges) }),
 	)
 	// Actions on the chat need it in the chat list.
 	if chat := u.chatByID(c.ID); chat != nil {
 		id, name := chat.ID, info.Name
 		rows = append(rows,
 			u.infoFavRow(chat),
-			u.infoRow("list", listItem{ic: icAddToList, title: "Add to list"}, func() { u.openListsMenu(chat) }),
-			u.infoRow("clear", listItem{ic: icClear, title: "Clear chat", danger: true}, func() { u.confirmClearChat(id) }),
+			u.infoRow("list", listItem{ic: icAddToList, title: u.locale.Text("Add to list")}, func() { u.openListsMenu(chat) }),
+			u.infoRow("clear", listItem{ic: icClear, title: u.locale.Text("Clear chat"), danger: true}, func() { u.confirmClearChat(id) }),
 		)
 		if chat.Exited {
-			rows = append(rows, u.infoRow("delete", listItem{ic: icDelete, title: "Delete chat", danger: true}, func() { u.confirmDeleteChat(id) }))
+			rows = append(rows, u.infoRow("delete", listItem{ic: icDelete, title: u.locale.Text("Delete chat"), danger: true}, func() { u.confirmDeleteChat(id) }))
 		} else {
-			rows = append(rows, u.infoRow("exit", listItem{ic: icLogout, title: "Exit group", danger: true}, func() { u.confirmExitGroup(id, name) }))
+			rows = append(rows, u.infoRow("exit", listItem{ic: icLogout, title: u.locale.Text("Exit group"), danger: true}, func() { u.confirmExitGroup(id, name) }))
 		}
 	}
-	rows = append(rows, u.infoRow("report", listItem{ic: icThumbDown, title: "Report group", danger: true}, u.reportUnsupported))
+	rows = append(rows, u.infoRow("report", listItem{ic: icThumbDown, title: u.locale.Text("Report group"), danger: true}, u.reportUnsupported))
 	if !info.Created.IsZero() {
 		by := ""
 		if info.CreatedBy != "" {
@@ -334,6 +337,8 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 // infoRow is one of the taller rows at the bottom of an info panel. run
 // may be nil while the row does nothing yet.
 func (u *UI) infoRow(key string, it listItem, run func()) layout.Widget {
+	it.title = u.locale.Text(it.title)
+	it.sub = u.locale.Text(it.sub)
 	g := infoGeom
 	g.height = 65.5
 	return func(gtx C) D {
@@ -369,7 +374,7 @@ func (u *UI) infoNotifRow(c *model.Chat, unmuted string) layout.Widget {
 				u.openMuteMenu(chat)
 			}
 		}
-		return u.layoutListItem(gtx, b, listItem{ic: ic, title: "Notification settings", sub: sub}, infoGeom)
+		return u.layoutListItem(gtx, b, listItem{ic: ic, title: u.locale.Text("Notification settings"), sub: sub}, infoGeom)
 	}
 }
 
@@ -413,21 +418,21 @@ func (u *UI) infoProfile(gtx C, c *model.Chat, info *model.ChatInfo) D {
 	var sub layout.Widget
 	if info.IsGroup {
 		n := len(info.Members)
-		members := fmt.Sprintf("%d members", n)
+		members := u.locale.Textf("%d members", n)
 		if n == 1 {
-			members = "1 member"
+			members = u.locale.Text("1 member")
 		}
 		sub = func(gtx C) D {
 			return layout.Flex{Alignment: layout.Baseline}.Layout(gtx,
-				layout.Rigid(u.label(16.8, "Group · ", p.TextSecondary).Layout),
+				layout.Rigid(u.label(16.8, u.locale.Text("Group · "), p.TextSecondary).Layout),
 				layout.Rigid(u.label(16.8, members, p.Green, labelOpts{weight: font.SemiBold}).Layout),
 			)
 		}
 		if n == 0 {
-			sub = u.label(16.8, "Group", p.TextSecondary).Layout
+			sub = u.label(16.8, u.locale.Text("Group"), p.TextSecondary).Layout
 		}
 		if c.Exited {
-			sub = u.label(16.8, "You are no longer a member", p.TextSecondary).Layout
+			sub = u.label(16.8, u.locale.Text("You are no longer a member"), p.TextSecondary).Layout
 		}
 	} else {
 		sub = u.contactSubtitle(c, info)
@@ -524,7 +529,7 @@ func (u *UI) infoProfile(gtx C, c *model.Chat, info *model.ChatInfo) D {
 				if i > 0 {
 					children = append(children, layout.Rigid(layout.Spacer{Width: 17}.Layout))
 				}
-				children = append(children, layout.Rigid(func(gtx C) D { return u.infoAction(gtx, a.key, a.ic, a.label) }))
+				children = append(children, layout.Rigid(func(gtx C) D { return u.infoAction(gtx, a.key, a.ic, u.locale.Text(a.label)) }))
 			}
 			return layout.Flex{}.Layout(gtx, children...)
 		}),
@@ -589,7 +594,7 @@ func (u *UI) infoMedia(gtx C, info *model.ChatInfo) D {
 	}
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			return u.layoutListItem(gtx, u.btn("info:media"), listItem{ic: icPermMedia, title: "Media, links and docs",
+			return u.layoutListItem(gtx, u.btn("info:media"), listItem{ic: icPermMedia, title: u.locale.Text("Media, links and docs"),
 				trailing: func(gtx C) D {
 					if media.Count == 0 {
 						return D{}
@@ -667,7 +672,7 @@ func (u *UI) pill(txt string, size unit.Sp, round bool) layout.Widget {
 
 func (u *UI) infoMembersHeader(gtx C, info *model.ChatInfo) D {
 	n := len(info.Members)
-	txt := fmt.Sprintf("%d members", n)
+	txt := u.locale.Textf("%d members", n)
 	if n == 1 {
 		txt = "1 member"
 	}

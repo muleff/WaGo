@@ -316,7 +316,7 @@ var notoColorEmoji []byte
 // separate files that each cost ~40 MB of heap once loaded (the whole
 // glyph table is parsed), so a bold name plus a regular message would load
 // two of them.
-const typeface font.Typeface = "Segoe UI, " + emojiTypeface + ", Segoe UI Symbol, MS Gothic, Cambria Math, Helvetica Neue, Roboto, Noto Sans, sans-serif, Go"
+const typeface font.Typeface = "Segoe UI, Roboto, Helvetica Neue, Noto Sans, Go, " + emojiTypeface + ", Segoe UI Symbol, MS Gothic, Cambria Math, sans-serif"
 
 func newTheme() *material.Theme {
 	th := material.NewTheme()

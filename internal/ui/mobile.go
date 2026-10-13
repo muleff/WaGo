@@ -1,89 +1,105 @@
 package ui
 
 import (
-	"image"
-	"image/color"
-
+	"gioui.org/font"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/widget"
+	"gioui.org/text"
+	"image"
 )
 
-// layoutMobileMain shows one navigation surface at a time. Phones do not
-// have enough width for the desktop rail, chat list and conversation panes.
-func (u *UI) layoutMobileMain(gtx C) D {
-	sz := gtx.Constraints.Max
-	// Conversations have their own Back action in the header. Give the
-	// message list and composer the entire viewport, especially with the
-	// on-screen keyboard open.
-	inChat := u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings
-	navH := 0
-	if !inChat {
-		navH = min(sz.Y, gtx.Dp(64))
-	}
-	content := gtx
-	content.Constraints = layout.Exact(image.Pt(max(0, sz.X), max(0, sz.Y-navH)))
-	fillRect(content, image.Rectangle{Max: content.Constraints.Max}, u.pal.Panel)
-	if inChat {
-		u.layoutRightPane(content)
-	} else {
-		u.layoutPageSidebar(content)
-	}
-	if navH == 0 {
-		return D{Size: sz}
-	}
-	nav := gtx
-	nav.Constraints = layout.Exact(image.Pt(sz.X, navH))
-	t := op.Offset(image.Pt(0, sz.Y-navH)).Push(gtx.Ops)
-	u.layoutMobileNavigation(nav)
-	t.Pop()
-	return D{Size: sz}
+type mobileTab struct {
+	page  page
+	label string
 }
 
+func mobileTabs() []mobileTab {
+	return []mobileTab{{pageChats, "Chats"}, {pageStatus, "Updates"}, {pageCommunities, "Communities"}, {pageCalls, "Calls"}}
+}
+
+func (u *UI) layoutMobileMain(gtx C) D {
+	sz := gtx.Constraints.Max
+	inChat := u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings
+	sendingStatus := u.page == pageStatus && isStatusDestination(u.attach.chatID) && len(u.attach.files) > 0
+	navH := 0
+	if !inChat && !sendingStatus {
+		navH = min(sz.Y, gtx.Dp(72))
+	}
+	content := gtx
+	content.Constraints = layout.Exact(image.Pt(sz.X, max(0, sz.Y-navH)))
+	fillRect(content, image.Rectangle{Max: content.Constraints.Max}, u.pal.Panel)
+	switch {
+	case inChat || sendingStatus:
+		u.layoutRightPane(content)
+	case u.page == pageStatus:
+		u.layoutMobileUpdates(content)
+	default:
+		u.layoutPageSidebar(content)
+	}
+	if navH > 0 {
+		nav := gtx
+		nav.Constraints = layout.Exact(image.Pt(sz.X, navH))
+		t := op.Offset(image.Pt(0, sz.Y-navH)).Push(gtx.Ops)
+		u.layoutMobileNavigation(nav)
+		t.Pop()
+	}
+	return D{Size: sz}
+}
 func (u *UI) layoutMobileNavigation(gtx C) D {
 	p := u.pal
-	unread := 0
-	for _, c := range u.chats {
-		if c.Unread > 0 && !c.Archived {
-			unread++
-		}
-	}
-	statusUnseen := false
-	for _, t := range u.statuses {
-		if !t.Mine && !t.Viewed() && t.Last().Time.After(u.statusSeen) {
-			statusUnseen = true
-			break
-		}
-	}
-	channelUnread := false
-	for _, c := range u.channels {
-		if c.Unread > 0 && c.Time.After(u.channelsSeen) {
-			channelUnread = true
-			break
-		}
-	}
 	fillRect(gtx, image.Rect(0, 0, gtx.Constraints.Max.X, max(1, gtx.Dp(1))), p.Divider)
-	item := func(c *widget.Clickable, active bool, glyph func(gtx C, col color.NRGBA) D, badge int, dot bool) layout.FlexChild {
-		return layout.Flexed(1, func(gtx C) D {
-			return layout.Center.Layout(gtx, func(gtx C) D {
-				return u.railButton(gtx, c, active, glyph, badge, dot)
+	var children []layout.FlexChild
+	for i, tab := range mobileTabs() {
+		children = append(children, layout.Flexed(1, func(gtx C) D {
+			c := u.btn("mobile:tab:" + itoa(i))
+			if c.Clicked(gtx) {
+				u.setPage(tab.page)
+				u.setListHidden(false)
+			}
+			active := u.page == tab.page || tab.page == pageStatus && u.page == pageChannels
+			return clickable(gtx, c, func(gtx C) D {
+				sz := gtx.Constraints.Max
+				gtx.Constraints = layout.Exact(sz)
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					col := p.IconStrong
+					if active {
+						col = p.Green
+					}
+					return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							switch tab.page {
+							case pageChats:
+								return chatsOutline(gtx, 24, col)
+							case pageStatus:
+								return statusIcon(gtx, 24, col, active)
+							case pageCommunities:
+								return drawIcon(gtx, icGroupsLine, 24, col)
+							default:
+								return drawIcon(gtx, icCall, 24, col)
+							}
+						}), layout.Rigid(layout.Spacer{Height: 5}.Layout),
+						layout.Rigid(u.label(12, u.locale.Text(tab.label), col, labelOpts{weight: font.Medium, maxLines: 2, align: text.Middle}).Layout))
+				})
 			})
-		})
+		}))
 	}
-	return layout.Flex{Axis: layout.Horizontal, Alignment: layout.Middle}.Layout(gtx,
-		item(&u.rail.chats, u.page == pageChats && !u.sidebar.showArchived,
-			func(gtx C, col color.NRGBA) D { return chatsOutline(gtx, 24, col) }, unread, false),
-		item(&u.rail.calls, u.page == pageCalls,
-			func(gtx C, col color.NRGBA) D { return drawIcon(gtx, icCall, 24, col) }, 0, false),
-		item(&u.rail.status, u.page == pageStatus,
-			func(gtx C, col color.NRGBA) D { return statusIcon(gtx, 24, col, u.page == pageStatus) }, 0, statusUnseen),
-		item(&u.rail.channels, u.page == pageChannels,
-			func(gtx C, col color.NRGBA) D {
-				return channelsIcon(gtx, 24, col, p.RailActive, u.page == pageChannels)
-			}, 0, channelUnread),
-		item(&u.rail.communities, u.page == pageCommunities,
-			func(gtx C, col color.NRGBA) D { return drawIcon(gtx, icGroupsLine, 24, col) }, 0, false),
-		item(&u.rail.profile, u.page == pageSettings,
-			func(gtx C, col color.NRGBA) D { return drawIcon(gtx, icSettings, 24, col) }, 0, false),
-	)
+	return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
+}
+func (u *UI) mobileHasBack() bool {
+	return u.voiceRecord.phase != recordIdle || u.acctMenu.open || u.menu.open || u.ctx.isOpen() || u.dialog.isOpen() || u.status.text.isOpen() || u.picker.open || u.viewer.open || u.gallery.open || u.info.open || u.search.open || u.msgInfo.open || u.newChat.open() || u.conv.selecting || u.conv.edit.msg != nil || u.conv.reply != nil || u.status.viewer.isOpen() || len(u.attach.files) > 0 || u.selected != nil || u.settings.detail != 0 || u.page != pageChats
+}
+func (u *UI) mobileBack() bool {
+	if !u.mobileHasBack() {
+		return false
+	}
+	channel := u.selected != nil && isChannelID(u.selected.ID)
+	if u.selected == nil && !u.info.open && !u.search.open && !u.msgInfo.open && !u.dialog.isOpen() && !u.menu.open && !u.ctx.isOpen() && !u.status.viewer.isOpen() && !u.status.text.isOpen() && !u.viewer.open && !u.gallery.open && !u.newChat.open() && !u.acctMenu.open && !u.picker.open && len(u.attach.files) == 0 && u.settings.detail == 0 {
+		u.setPage(pageChats)
+		return true
+	}
+	u.escape()
+	if channel && u.selected == nil {
+		u.setPage(pageStatus)
+	}
+	return true
 }

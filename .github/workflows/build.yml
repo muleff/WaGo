@@ -262,7 +262,9 @@ jobs:
           go mod verify
 
       - name: Install Gio Android packager
-        run: go install gioui.org/cmd/gogio@v0.10.3
+        run: |
+          cd third_party/gogio
+          go install ./gogio
 
       # Optional persistent signature for installing newer APKs over older ones.
       # Without these secrets gogio generates a temporary development key.
@@ -324,8 +326,6 @@ jobs:
             grep -q 'android.permission.INTERNET'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
             grep -q 'android.permission.RECORD_AUDIO'
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
-            grep -q 'android.permission.READ_EXTERNAL_STORAGE'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
             grep -q 'android.permission.CAMERA'
 

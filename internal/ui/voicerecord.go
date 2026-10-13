@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"errors"
-	"fmt"
 	"image"
 	"os"
 	"runtime"
@@ -47,11 +46,15 @@ type voiceRecordState struct {
 }
 
 func (u *UI) beginVoiceRecord() {
+	if u.mobile && u.conn.State != model.StateOnline {
+		u.toast(u.locale.Text("Waiting for connection. Your draft is saved."))
+		return
+	}
 	if u.selected == nil || u.voiceRecord.phase != recordIdle || u.ghostMode() {
 		return
 	}
 	if u.window == nil {
-		u.toast("Microphone recording requires an active app window.")
+		u.toast(u.locale.Text("Microphone recording requires an active app window."))
 		return
 	}
 	if runtime.GOOS == "windows" && !u.microphoneConsent {
@@ -95,7 +98,7 @@ func (u *UI) finishVoiceRecord() {
 		return
 	}
 	if u.now().Sub(r.started) < time.Second {
-		u.toast("Record at least one second of audio.")
+		u.toast(u.locale.Text("Record at least one second of audio."))
 		return
 	}
 	r.phase = recordFinishing
@@ -198,7 +201,7 @@ func (u *UI) updateVoiceRecord() {
 			if err != nil {
 				u.reportVoiceCaptureError(err)
 			} else {
-				u.toast("Microphone capture stopped unexpectedly.")
+				u.toast(u.locale.Text("Microphone capture stopped unexpectedly."))
 			}
 		}
 	default:
@@ -222,21 +225,25 @@ func (u *UI) reportVoiceCaptureError(err error) {
 				label: "Copy debug details", primary: true,
 				run: func() {
 					u.pendingCopy = voicerec.DiagnosticReport()
-					u.toast("Microphone diagnostics copied. Review them before sharing.")
+					u.toast(u.locale.Text("Microphone diagnostics copied. Review them before sharing."))
 				},
 			},
 			dialogButton{
 				label: "Microphone settings",
 				run: func() {
 					if !openTarget("ms-settings:privacy-microphone") {
-						u.toast("Couldn't open Windows microphone settings.")
+						u.toast(u.locale.Text("Couldn't open Windows microphone settings."))
 					}
 				},
 			},
 		)
 		return
 	}
-	u.toast(err.Error())
+	if runtime.GOOS == "android" && errors.Is(err, voicerec.ErrMicrophoneAccess) {
+		u.toast(u.locale.Text("Microphone access was denied. Enable it in Android settings."))
+		return
+	}
+	u.toast(u.locale.Textf("Could not record audio: %s", err.Error()))
 }
 
 func (r *voiceRecordState) recDone() <-chan struct{} {
@@ -259,12 +266,12 @@ func (u *UI) layoutVoiceComposer(gtx C) D {
 				}),
 				layout.Rigid(layout.Spacer{Width: 8}.Layout),
 				layout.Flexed(1, func(gtx C) D {
-					status := "Preparing microphone…"
+					status := u.locale.Text("Preparing microphone…")
 					if r.phase == recordFinishing {
-						status = "Sending recording…"
+						status = u.locale.Text("Sending recording…")
 					} else if r.phase == recordActive {
 						elapsed := max(0, int(u.now().Sub(r.started).Seconds()))
-						status = fmt.Sprintf("● Recording  %d:%02d", elapsed/60, elapsed%60)
+						status = u.locale.Textf("● Recording  %d:%02d", elapsed/60, elapsed%60)
 						gtx.Execute(op.InvalidateCmd{At: gtx.Now.Add(time.Second)})
 					}
 					return vcenter(gtx, gtx.Dp(55), u.label(15, status, p.Text, labelOpts{weight: font.Medium}).Layout)

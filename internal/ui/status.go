@@ -388,7 +388,7 @@ func (u *UI) sendStatusReply() {
 	u.requestFocus(nil)
 	if m != nil {
 		u.upsertMessage(m)
-		u.toast("Reply sent")
+		u.toast(u.locale.Text("Reply sent"))
 	}
 }
 
@@ -402,7 +402,7 @@ func (u *UI) statusTick(gtx C, now time.Time, hold bool) bool {
 		vv.player.Close()
 		vv.player, vv.external = nil, true
 		v.shownAt = now
-		u.toast("This video can't play here. Press play to open it in your video player.")
+		u.toast(u.locale.Text("This video can't play here. Press play to open it in your video player."))
 	}
 	if vv.player != nil || vv.loading {
 		// The video keeps the time; the timer starts over if it can't play.
@@ -629,7 +629,7 @@ func (u *UI) layoutStatusViewer(gtx C) {
 						layout.Rigid(layout.Spacer{Width: 8}.Layout),
 						layout.Rigid(iconW(icBlock, 14, u.pal.Danger)),
 						layout.Rigid(layout.Spacer{Width: 2}.Layout),
-						layout.Rigid(u.label(13.5, "Deleted", u.pal.Danger).Layout),
+						layout.Rigid(u.label(13.5, u.locale.Text("Deleted"), u.pal.Danger).Layout),
 					)
 				}),
 			)
@@ -810,7 +810,7 @@ func (u *UI) layoutStatusVideoCenter(gtx C, t *model.StatusThread, up *model.Sta
 			if vv.external {
 				u.status.viewer.paused = true
 				u.backend.OpenMedia(m)
-				u.toast("Opening video…")
+				u.toast(u.locale.Text("Opening video…"))
 			} else {
 				u.loadVideo(vv, m) // after a failed download
 			}
