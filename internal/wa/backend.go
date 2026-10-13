@@ -1579,12 +1579,15 @@ func (b *Backend) fetchGroupName(j types.JID) {
 }
 
 func lastSeen(t, now time.Time) string {
+	t = t.In(now.Location())
+	yesterday := now.AddDate(0, 0, -1)
+	yy, ym, yd := yesterday.Date()
 	y1, m1, d1 := t.Date()
 	y2, m2, d2 := now.Date()
 	switch {
 	case y1 == y2 && m1 == m2 && d1 == d2:
 		return "today at " + t.Format("15:04")
-	case now.Sub(t) < 48*time.Hour && d2-d1 == 1:
+	case y1 == yy && m1 == ym && d1 == yd:
 		return "yesterday at " + t.Format("15:04")
 	default:
 		return t.Format("02/01/2006") + " at " + t.Format("15:04")

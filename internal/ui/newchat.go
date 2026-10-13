@@ -407,8 +407,8 @@ func (u *UI) pickGroupPhoto() {
 // groupPhotoItems is the menu of the picture on the New group page.
 func (u *UI) groupPhotoItems() []menuItem {
 	return []menuItem{
-		{key: "gphoto:change", ic: icAddPhoto, label: "Change picture", run: u.pickGroupPhoto},
-		{key: "gphoto:remove", ic: icDelete, label: "Remove picture", run: func() { u.newChat.photo = nil }},
+		{key: "gphoto:change", ic: icAddPhoto, label: u.locale.Text("Change picture"), run: u.pickGroupPhoto},
+		{key: "gphoto:remove", ic: icDelete, label: u.locale.Text("Remove picture"), run: func() { u.newChat.photo = nil }},
 	}
 }
 
@@ -614,9 +614,9 @@ func (u *UI) layoutNewChatPage(gtx C) D {
 	q := trimSpace(nc.search.Text())
 	var rows []layout.Widget
 	if digits := phoneDigits(q); digits != "" {
-		sub := "Message this number"
+		sub := u.locale.Text("Message this number")
 		if nc.lookup == digits {
-			sub = "Checking…"
+			sub = u.locale.Text("Checking…")
 		}
 		rows = append(rows, func(gtx C) D {
 			return u.ncRow(gtx, u.btn("nc:phone"), func(gtx C) D { return u.avatar(gtx, "", "", false, 49) }, "+"+digits, sub)
@@ -653,10 +653,10 @@ func (u *UI) layoutNewChatPage(gtx C) D {
 	if len(contacts) == 0 {
 		switch {
 		case q != "" && len(rows) == 0:
-			rows = append(rows, func(gtx C) D { return u.ncNote(gtx, "No results found for '"+q+"'") })
+			rows = append(rows, func(gtx C) D { return u.ncNote(gtx, u.locale.Textf("No results found for '%s'", q)) })
 		case q == "" && len(nc.contacts) == 0:
 			rows = append(rows, func(gtx C) D {
-				return u.ncNote(gtx, "Your contacts on WhatsApp show here once your phone has synced them. Type a phone number with its country code to message it.")
+				return u.ncNote(gtx, u.locale.Text("Your contacts on WhatsApp show here once your phone has synced them. Type a phone number with its country code to message it."))
 			})
 		}
 	}
@@ -687,7 +687,7 @@ func (u *UI) layoutMembersPage(gtx C) D {
 			if len(contacts) == 0 {
 				msg := "No contacts left to add"
 				if q != "" {
-					msg = "No results found for '" + q + "'"
+					msg = u.locale.Textf("No results found for '%s'", q)
 				}
 				return u.ncNote(gtx, msg)
 			}
@@ -830,7 +830,7 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 		},
 		func(gtx C) D {
 			return u.contentInset(layout.Inset{Left: 6, Right: 6}).Layout(gtx, func(gtx C) D {
-				return u.pollField(gtx, &nc.name, "Group name")
+				return u.pollField(gtx, &nc.name, u.locale.Text("Group name"))
 			})
 		},
 		func(gtx C) D {
@@ -899,7 +899,7 @@ func (u *UI) groupPhotoButton(gtx C) D {
 				layout.Rigid(iconW(icAddPhoto, 32, p.UserAvatarIcon)),
 				layout.Rigid(layout.Spacer{Height: 8}.Layout),
 				layout.Rigid(func(gtx C) D {
-					l := u.label(12.5, "ADD GROUP ICON", p.UserAvatarIcon, labelOpts{weight: font.Medium, align: text.Middle})
+					l := u.label(12.5, u.locale.Text("Add group icon"), p.UserAvatarIcon, labelOpts{weight: font.Medium, align: text.Middle})
 					l.MaxLines = 2
 					return l.Layout(gtx)
 				}),

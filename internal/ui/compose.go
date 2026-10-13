@@ -768,6 +768,9 @@ func (u *UI) layoutComposerBox(gtx C) D {
 				return D{Size: image.Pt(full.size.X, h)}
 			}),
 			layout.Rigid(func(gtx C) D {
+				if u.mobile {
+					return u.layoutMobileComposerControls(gtx, sv)
+				}
 				return vcenter(gtx, gtx.Dp(55), func(gtx C) D {
 					return layout.Inset{Left: 8, Right: 8}.Layout(gtx, func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
@@ -837,7 +840,11 @@ func (u *UI) layoutComposerBox(gtx C) D {
 		// A preview above the input makes the box less round, its corner
 		// around theirs.
 		r := lerpInt(gtx.Dp(28), gtx.Dp(composerCardRadius+8), max(rv, lv))
-		fillRRect(gtx, image.Rectangle{Max: dims.Size}, min(dims.Size.Y/2, r), p.Composer)
+		rect := image.Rectangle{Max: dims.Size}
+		if u.mobile {
+			rect.Max.X = max(0, rect.Max.X-gtx.Dp(56))
+		}
+		fillRRect(gtx, rect, min(dims.Size.Y/2, r), p.Composer)
 		call.Add(gtx.Ops)
 		for _, pk := range []struct {
 			p part
@@ -999,7 +1006,7 @@ func (u *UI) layoutPinnedBanner(gtx C, m *model.Message) D {
 				return layout.Inset{Left: 22, Right: 16}.Layout(gtx, func(gtx C) D {
 					txt := plainText(stripIsolates(m.Text))
 					if m.Media != model.MediaNone && txt == "" {
-						txt = mediaLabel(m)
+						txt = u.mediaText(m)
 					}
 					who, _, _ := u.senderLabel(m)
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,

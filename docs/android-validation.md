@@ -90,3 +90,31 @@ built locally and its v1/v2/v3 signatures verified. Device-runtime status-bar
 appearance and touch feel still need checking on a physical Android device.
 The previous remote Android job succeeded; desktop jobs failed only on two
 unformatted fields in model.Attachment, now formatted for the next run.
+
+## Reference-based mobile correction
+
+The earlier spacing fix missed chat/channel rows, whose nested desktop insets
+still wasted horizontal space. Mobile rows now extend to both screen edges,
+retain only content padding, and use stronger name typography. Filter chips
+scroll horizontally. The mobile navigation highlights the active destination;
+chat creation and status posting use floating action buttons. Novedades uses
+horizontal status preview cards above channel rows. The mobile composer keeps
+its microphone/send circle separate from the message pill. Group conversations
+no longer reserve both side gutters for desktop sender avatars. Mobile colors
+and wallpaper scale were checked against the supplied visual references while
+retaining WaGo's identity and supported features.
+
+Presence dates now compare calendar days in the local timezone, including month
+and year boundaries. Android reads java.util.TimeZone before starting the
+backend and bundles zone data. Presence/typing copy is localized; mobile clocks
+use Spanish 12-hour notation. Generated media, deletion, editing, status and
+menu labels have additional Spanish coverage. Contact names and message/caption
+content remain unchanged, with regressions covering names and captions that
+match translatable UI strings.
+
+Verification: complete Go suite, vet, build and formatting; 70 headless renders
+cover 14 views at 320/390 dp, landscape, keyboard height and large text. Tests
+cover full-width row taps, horizontal status scrolling, vertical message
+scrolling, swipe-to-reply, Spanish presence and media copy, timezone loading and
+last-seen calendar boundaries. Actual phone appearance and touch interactions
+still need device testing; headless renders do not provide that evidence.

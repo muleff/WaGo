@@ -6,6 +6,7 @@ package androidbridge
 #include <jni.h>
 #include <stdint.h>
 char *wago_bytes(JNIEnv *env, jbyteArray bytes, int *len);
+char *wago_timezone(uintptr_t vm);
 #include <stdlib.h>
 int wago_request(uintptr_t vm, uintptr_t context, long long id, int kind, const char *payload);
 */
@@ -110,4 +111,14 @@ func Java_org_gioui_WaGoBridge_nativeForeground(env *C.JNIEnv, cls C.jclass) {
 	if callback != nil {
 		callback()
 	}
+}
+
+// ConfigureLocalTime reads the Android system timezone before backend startup.
+func ConfigureLocalTime() error {
+	name := C.wago_timezone(C.uintptr_t(app.JavaVM()))
+	if name == nil {
+		return errors.New("Android timezone unavailable")
+	}
+	defer C.free(unsafe.Pointer(name))
+	return setLocalTimezone(C.GoString(name))
 }

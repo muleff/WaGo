@@ -160,7 +160,7 @@ func (u *UI) layoutConversation(gtx C) D {
 		}),
 		layout.Flexed(1, func(gtx C) D {
 			sz := gtx.Constraints.Max
-			u.conv.wallpaper.layout(gtx, u.pal.ChatBg, u.pal.Doodle, u.doodles)
+			u.layoutWallpaper(gtx)
 
 			// The composer floats over the wallpaper; the list ends above it.
 			m := op.Record(gtx.Ops)
@@ -218,21 +218,29 @@ func (u *UI) layoutConvHeader(gtx C, c *model.Chat) D {
 		return vcenter(gtx, gtx.Dp(64), func(gtx C) D {
 			mobile := u.mobile
 
-			return layout.Inset{
-				Left:  17,
-				Right: 16,
-			}.Layout(gtx, func(gtx C) D {
-				sub := c.Presence
+			in := layout.Inset{Left: 17, Right: 16}
+			if mobile {
+				in = layout.Inset{Left: 4, Right: 8}
+			}
+			return in.Layout(gtx, func(gtx C) D {
+				sub := u.presenceText(c.Presence)
+				if c.IsGroup && !c.Exited {
+					if strings.HasSuffix(sub, ", You") {
+						sub = strings.TrimSuffix(sub, ", You") + ", " + u.locale.Text("You")
+					} else if sub == "You" {
+						sub = u.locale.Text("You")
+					}
+				}
 				if ch := u.channelByID(c.ID); ch != nil {
-					sub = followers(ch.Followers)
+					sub = u.followerText(ch.Followers)
 				}
 
 				// Announcements use their community's name and picture.
 				cm := u.announcementsOf(c)
 				if cm != nil {
-					sub = "Announcements"
+					sub = u.locale.Text("Announcements")
 				}
-				if t := typingText(c); t != "" {
+				if t := u.typingText(c); t != "" {
 					sub = t
 				}
 				if sub == "" {
@@ -363,6 +371,9 @@ func (u *UI) layoutConvHeader(gtx C, c *model.Chat) D {
 
 				children = append(children,
 					layout.Rigid(func(gtx C) D {
+						if mobile {
+							return D{}
+						}
 						return u.iconButton(
 							gtx, &u.conv.search,
 							icSearch, 40, 26, p.IconStrong,
@@ -507,9 +518,7 @@ func (u *UI) layoutMessages(gtx C, c *model.Chat) D {
 	maxBubble := min(width*69/100, width-2*margin)
 	if u.mobile {
 		margin = gtx.Dp(8)
-		if c.IsGroup {
-			margin = gtx.Dp(36)
-		}
+
 		maxBubble = min(width*88/100, width-2*margin)
 	}
 	if isChannelID(c.ID) {
@@ -713,7 +722,7 @@ func (u *UI) layoutMessageRowContent(gtx C, c *model.Chat, r convRow, maxW, marg
 		fillRect(gtx, band, argb(0x5dbf6e, 0x26))
 	}
 	bubble.at(gtx, x, 0)
-	if c.IsGroup && r.first && !m.FromMe && !ann {
+	if c.IsGroup && r.first && !m.FromMe && !ann && !u.mobile {
 		// The sender's avatar sits in the left margin, level with the bubble.
 		sz := gtx.Dp(29)
 		t := op.Offset(image.Pt(x-min(gtx.Dp(40), margin), 0)).Push(gtx.Ops)
@@ -823,7 +832,7 @@ func (u *UI) encryptionNotice(gtx C, maxW int) D {
 	gtx.Constraints.Min.X = 0
 	return u.card(gtx, 8, p.Encryption, func(gtx C) D {
 		return layout.Inset{Left: 12, Right: 12, Top: 6, Bottom: 7}.Layout(gtx, func(gtx C) D {
-			l := u.label(12.5, "🔒 Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them.",
+			l := u.label(12.5, u.locale.Text("🔒 Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them."),
 				p.EncryptionText, labelOpts{align: text.Middle})
 			l.MaxLines = 0
 			return l.Layout(gtx)
@@ -892,15 +901,15 @@ func (u *UI) layoutMeta(gtx C, m *model.Message, col color.NRGBA, tickCol *color
 		children = append(children,
 			layout.Rigid(iconW(icBlock, 14, u.pal.Danger)),
 			layout.Rigid(layout.Spacer{Width: 2}.Layout),
-			layout.Rigid(u.label(12.5, "Deleted", u.pal.Danger).Layout),
+			layout.Rigid(u.label(12.5, u.locale.Text("Deleted"), u.pal.Danger).Layout),
 			layout.Rigid(layout.Spacer{Width: 4}.Layout))
 	}
 	if !m.Edited.IsZero() && m.Kind != model.KindDeleted {
 		children = append(children,
-			layout.Rigid(u.label(12.5, "Edited", col).Layout),
+			layout.Rigid(u.label(12.5, u.locale.Text("Edited"), col).Layout),
 			layout.Rigid(layout.Spacer{Width: 4}.Layout))
 	}
-	children = append(children, layout.Rigid(u.label(12.5, m.Time.Format("15:04"), col).Layout))
+	children = append(children, layout.Rigid(u.label(12.5, u.clockText(m.Time), col).Layout))
 	if m.FromMe && m.Kind != model.KindDeleted {
 		ic, tc := receiptIcon(m.Receipt, u.pal, true)
 		if m.Receipt != model.Read && m.Receipt != model.Failed {
@@ -1100,13 +1109,13 @@ func (u *UI) layoutBubble(gtx C, c *model.Chat, m *model.Message, tail bool, max
 	var voc part           // an unopened view once message's card
 	switch {
 	case m.Kind == model.KindDeleted:
-		text, textCol, italic = "This message was deleted", secondary, true
+		text, textCol, italic = u.locale.Text("This message was deleted"), secondary, true
 		if out {
-			text = "You deleted this message"
+			text = u.locale.Text("You deleted this message")
 		}
 		lead = iconW(icBlock, 19, secondary)
 	case m.Kind == model.KindUnsupported:
-		text, textCol, italic = "This message couldn't load. Open the message on your phone to view it.", secondary, true
+		text, textCol, italic = u.locale.Text("This message couldn't load. Open the message on your phone to view it."), secondary, true
 		lead = iconW(icUnsupported, 19, secondary)
 	case voCard:
 		text, textInset = "", gtx.Dp(6)
@@ -1122,9 +1131,9 @@ func (u *UI) layoutBubble(gtx C, c *model.Chat, m *model.Message, tail bool, max
 		text = attachmentCaption(m) // under the document card or player
 	case !isImg && m.Media != model.MediaNone:
 		lead = iconW(mediaIcon(m.Media), 20, secondary)
-		text = mediaLabel(m)
+		text = u.mediaText(m)
 		if m.Media == model.MediaVoice {
-			text = "Voice message · " + mediaLabel(m)
+			text = u.locale.Text("Voice message") + " · " + u.mediaText(m)
 		}
 	}
 	var att part // document card or audio player
@@ -1513,17 +1522,18 @@ func (u *UI) paintBubble(gtx C, w, h int, bg color.NRGBA, out, tail bool) {
 func (u *UI) layoutQuote(gtx C, q *model.Quote, bg, secondary color.NRGBA, width int, qm *model.Message) D {
 	p := u.pal
 	name := q.Sender
-	if name == "" {
-		name = "You"
+	own := name == "" || qm != nil && qm.FromMe || q.SenderID != "" && q.SenderID == u.meID
+	if own {
+		name = u.locale.Text("You")
 	}
 	name = plainText(name)
 	col := p.Senders[hashIndex(name, len(p.Senders))]
-	if name == "You" {
+	if own {
 		col = p.Green
 	}
 	txt := q.Text
 	if q.Media != model.MediaNone {
-		txt = mediaLabel(&model.Message{Media: q.Media, Text: q.Text})
+		txt = u.mediaText(&model.Message{Media: q.Media, Text: q.Text})
 	}
 	gtx.Constraints.Min.X = width
 	gtx.Constraints.Max.X = width

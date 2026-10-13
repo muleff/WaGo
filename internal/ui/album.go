@@ -159,7 +159,7 @@ func (u *UI) layoutAlbumRow(gtx C, c *model.Chat, r convRow, maxW, margin int) D
 		fillRect(gtx, band, argb(0x5dbf6e, 0x26))
 	}
 	bubble.at(gtx, x, 0)
-	if c.IsGroup && r.first && !out {
+	if c.IsGroup && r.first && !out && !u.mobile {
 		// The sender's avatar sits in the left margin, level with the bubble.
 		sz := gtx.Dp(29)
 		t := op.Offset(image.Pt(x-min(gtx.Dp(40), margin), 0)).Push(gtx.Ops)

@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"strings"
+	"time"
 
 	"gioui.org/font"
 	"gioui.org/layout"
@@ -40,6 +41,9 @@ func (u *UI) layoutSidebar(gtx C) D {
 }
 
 func (u *UI) layoutSidebarHeader(gtx C) D {
+	if u.mobile && !u.sidebar.showArchived {
+		return u.pageHeader(gtx, u.locale.Text("Chats"), u.headerButton(&u.sidebar.menu, icMenu, 25))
+	}
 	p := u.pal
 	h := gtx.Dp(68)
 	if u.sidebar.showArchived {
@@ -48,7 +52,7 @@ func (u *UI) layoutSidebarHeader(gtx C) D {
 				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 					layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.sidebar.back, icBack, 40, 24, p.Icon) }),
 					layout.Rigid(layout.Spacer{Width: 10}.Layout),
-					layout.Flexed(1, u.label(19, "Archived", p.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+					layout.Flexed(1, u.label(19, u.locale.Text("Archived"), p.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
 				)
 			})
 		})
@@ -74,7 +78,7 @@ func (u *UI) layoutSidebarHeader(gtx C) D {
 
 func (u *UI) layoutSearch(gtx C) D {
 	p := u.pal
-	return layout.Inset{Left: 23, Right: 23, Bottom: 11}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 23, Right: 23, Bottom: 11}).Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		return background(gtx, p.Search, 22, func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(43), func(gtx C) D {
@@ -83,7 +87,11 @@ func (u *UI) layoutSearch(gtx C) D {
 						layout.Rigid(iconW(icSearch, 22, p.TextSecondary)),
 						layout.Rigid(layout.Spacer{Width: 12}.Layout),
 						layout.Flexed(1, func(gtx C) D {
-							e := material.Editor(u.th, &u.sidebar.search, u.locale.Text("search.sidebar.chats"))
+							hint := u.locale.Text("search.sidebar.chats")
+							if u.mobile {
+								hint = u.locale.Text("Search")
+							}
+							e := material.Editor(u.th, &u.sidebar.search, hint)
 							e.TextSize = 15.5
 							e.Color = p.Text
 							e.HintColor = p.TextSecondary
@@ -115,6 +123,9 @@ func (u *UI) chip(gtx C, c *widget.Clickable, active float32, w layout.Widget) D
 // layoutChips draws the filter chips. Chips that don't fit collapse into a
 // round "more" chip with a drop-down, like WhatsApp does in narrow windows.
 func (u *UI) layoutChips(gtx C) D {
+	if u.mobile {
+		return u.layoutMobileFilters(gtx)
+	}
 	p := u.pal
 	return layout.Inset{Left: 21, Right: 21, Bottom: 10}.Layout(gtx, func(gtx C) D {
 		gap := gtx.Dp(8)
@@ -418,6 +429,9 @@ func (u *UI) chatRow(gtx C, c *model.Chat, o rowOpts) D {
 		avatar = func(gtx C) D { return u.avatar(gtx, c.ID, c.Name, c.IsGroup, 52) }
 	}
 	left, gap := o.avatarW, o.textGap
+	if u.mobile {
+		left, gap = 12, 12
+	}
 	if left == 0 {
 		left = 12
 	}
@@ -425,7 +439,11 @@ func (u *UI) chatRow(gtx C, c *model.Chat, o rowOpts) D {
 		gap = 16
 	}
 
-	return layout.Inset{Left: 13, Right: 18, Top: 2, Bottom: 2}.Layout(gtx, func(gtx C) D {
+	in := layout.Inset{Left: 13, Right: 18, Top: 2, Bottom: 2}
+	if u.mobile {
+		in = layout.Inset{}
+	}
+	return in.Layout(gtx, func(gtx C) D {
 		return clickable(gtx, click, func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			defer u.hiding(gtx, "row:"+c.ID, click.Hovered() || o.hovered)()
@@ -463,14 +481,24 @@ func (u *UI) chatRow(gtx C, c *model.Chat, o rowOpts) D {
 // badge, which always stays visible.
 func (u *UI) nameWithBadge(gtx C, name string, size unit.Sp, col color.NRGBA, verified bool) D {
 	if !verified {
-		return u.label(size, name, col).Layout(gtx)
+		l := u.label(size, name, col)
+		if u.mobile {
+			l.Font.Weight = font.SemiBold
+		}
+		return l.Layout(gtx)
 	}
 	badge := gtx.Dp(22)
 	ngtx := gtx
 	ngtx.Constraints.Min.X = 0
 	ngtx.Constraints.Max.X = max(0, gtx.Constraints.Max.X-badge)
 	return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-		layout.Rigid(func(gtx C) D { return u.label(size, name, col).Layout(ngtx) }),
+		layout.Rigid(func(gtx C) D {
+			l := u.label(size, name, col)
+			if u.mobile {
+				l.Font.Weight = font.SemiBold
+			}
+			return l.Layout(ngtx)
+		}),
 		layout.Rigid(func(gtx C) D {
 			return layout.Inset{Left: 4}.Layout(gtx, iconW(icVerified, 18, u.pal.Verified))
 		}),
@@ -495,7 +523,7 @@ func (u *UI) layoutRowName(gtx C, c *model.Chat, verified bool) D {
 	return layout.Flex{Alignment: layout.Baseline}.Layout(gtx,
 		layout.Flexed(1, func(gtx C) D {
 			gtx.Constraints.Min.X = 0
-			return u.label(17.5, c.Name, p.Text).Layout(gtx)
+			return u.label(17.5, c.Name, p.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout(gtx)
 		}),
 		layout.Rigid(u.label(17.5, "  "+u.locale.Text("ui.message.you"), p.Text).Layout),
 	)
@@ -513,6 +541,9 @@ func (u *UI) layoutRowTime(gtx C, c *model.Chat) D {
 	var ts string
 	if c.Last != nil {
 		ts = u.calendarText(listTime(c.Last.Time, u.now()))
+		if u.mobile && daysAgo(c.Last.Time.In(time.Local), u.now()) == 0 {
+			ts = u.clockText(c.Last.Time)
+		}
 	}
 	return u.label(13.2, ts, col).Layout(gtx)
 }
@@ -669,9 +700,9 @@ func (u *UI) previewParts(c *model.Chat, last *model.Message) []layout.FlexChild
 
 	switch {
 	case len(c.Typing) > 0:
-		children = append(children, layout.Flexed(1, u.label(size, typingText(c), p.Green, labelOpts{maxLines: 1}).Layout))
+		children = append(children, layout.Flexed(1, u.label(size, u.typingText(c), p.Green, labelOpts{maxLines: 1}).Layout))
 	case u.drafts[c.ID] != nil:
-		children = append(children, layout.Rigid(u.label(size, "Draft: ", p.Green).Layout))
+		children = append(children, layout.Rigid(u.label(size, u.locale.Text("Draft: "), p.Green).Layout))
 		ic, txt := draftPreview(u.drafts[c.ID])
 		if ic != nil {
 			children = append(children, small(ic, p.TextSecondary, 18, 4))
@@ -695,24 +726,24 @@ func (u *UI) previewParts(c *model.Chat, last *model.Message) []layout.FlexChild
 		switch {
 		case last.Kind == model.KindDeleted:
 			children = append(children, small(icBlock, p.TextSecondary, 17, 4))
-			txt, italic = "This message was deleted", true
+			txt, italic = u.locale.Text("This message was deleted"), true
 			if last.FromMe {
-				txt = "You deleted this message"
+				txt = u.locale.Text("You deleted this message")
 			}
 		case last.Kind == model.KindUnsupported:
 			children = append(children, small(icUnsupported, p.TextSecondary, 17, 4))
-			txt, italic = "This message couldn't load", true
+			txt, italic = u.locale.Text("This message couldn't load"), true
 		case last.Kind == model.KindViewOnce:
 			children = append(children, layout.Rigid(func(gtx C) D { return u.viewOnceMark(gtx, 18, p.TextSecondary) }),
 				layout.Rigid(layout.Spacer{Width: 4}.Layout))
-			txt = mediaLabel(last)
+			txt = u.mediaText(last)
 		case last.Media != model.MediaNone:
 			col := p.TextSecondary
 			if last.Media == model.MediaVoice && !last.FromMe && c.Unread > 0 {
 				col = p.Green
 			}
 			children = append(children, small(mediaIcon(last.Media), col, 18, 4))
-			txt = mediaLabel(last)
+			txt = u.mediaText(last)
 		}
 		children = append(children, layout.Flexed(1, u.label(size, previewText(txt), p.TextSecondary, labelOpts{maxLines: 1, italic: italic}).Layout))
 	}

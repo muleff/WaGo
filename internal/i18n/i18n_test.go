@@ -51,3 +51,12 @@ func TestSpanishMobileContactActions(t *testing.T) {
 		}
 	}
 }
+
+func TestSpanishPresenceAndMobileMenus(t *testing.T) {
+	l := New("es")
+	for _, key := range []string{"online", "typing…", "last seen %s", "today at %s", "yesterday at %s", "%s at %s", "Photos & videos", "Status privacy", "Explore", "Add status", "Message", "Photo", "Draft: ", "Edited"} {
+		if got := l.Text(key); got == key {
+			t.Errorf("untranslated mobile copy %q", key)
+		}
+	}
+}

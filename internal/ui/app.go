@@ -126,7 +126,8 @@ type UI struct {
 		// the last number of days picked, for the "Recent messages" row.
 		history, recent string
 	}
-	mobileLoginList widget.List
+	mobileLoginList     widget.List
+	mobileUpdatesSearch bool
 
 	// accounts lists the linked accounts, from the host; nil when there
 	// is only one backend.
@@ -207,6 +208,7 @@ type UI struct {
 		newChat, menu, back widget.Clickable
 		more                widget.Clickable // collapsed filter chips
 		hiddenFilters       []int
+		chipList            widget.List
 		search              widget.Editor
 		chips               [len(filterNames)]widget.Clickable
 		filter              int
@@ -370,6 +372,8 @@ func New(b model.Backend) *UI {
 	u.settings.search.SingleLine = true
 	u.sidebar.search.SingleLine = true
 	u.sidebar.list.Axis = layout.Vertical
+	u.sidebar.chipList.Axis = layout.Horizontal
+	u.status.cards.Axis = layout.Horizontal
 	u.mobileLoginList.Axis = layout.Vertical
 	u.sidebar.rows = make(map[string]*widget.Clickable)
 	u.conv.list.Axis = layout.Vertical
@@ -385,6 +389,9 @@ func New(b model.Backend) *UI {
 // Start loads the stored chats and starts the backend. notify is called
 // (from any goroutine) whenever the UI should redraw.
 func (u *UI) Start(notify func()) {
+	if u.mobile {
+		u.SetDark(u.dark)
+	}
 	u.images.invalidate = notify
 	u.emojiImgs.invalidate = notify
 	u.setChats(u.backend.Chats())
@@ -554,6 +561,19 @@ func (u *UI) SetDark(dark bool) {
 		u.pal = accentPalette(&darkPalette, true, u.accent)
 	} else {
 		u.pal = accentPalette(&lightPalette, false, u.accent)
+	}
+	if u.mobile && dark {
+		p := *u.pal
+		p.Panel, p.ChatBg = rgb(0x0b141a), rgb(0x0b141a)
+		p.Search, p.Composer, p.Menu = rgb(0x202c33), rgb(0x202c33), rgb(0x202c33)
+		p.BubbleIn, p.BubbleOut = rgb(0x202c33), rgb(0x005c4b)
+		p.Text, p.TextOut, p.IconStrong = rgb(0xe9edef), rgb(0xe9edef), rgb(0xe9edef)
+		p.TextSecondary, p.MetaIn, p.MetaOut = rgb(0x8696a0), rgb(0x8696a0), rgb(0x99b8af)
+		p.Green, p.OnGreen, p.ChipActive = rgb(0x25d366), rgb(0x0b141a), rgb(0x103b2d)
+		p.Chip, p.ChipBorder, p.ChipActiveText = rgb(0x0b141a), rgb(0x28343b), rgb(0xd9fdd3)
+		p.Divider, p.Doodle = rgb(0x19252c), rgb(0x17252d)
+		p.QuoteIn, p.QuoteOut = rgb(0x18242b), rgb(0x004b3e)
+		u.pal = &p
 	}
 	u.th.Palette.Fg = u.pal.Text
 	u.th.Palette.Bg = u.pal.Panel

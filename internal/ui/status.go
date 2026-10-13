@@ -21,6 +21,7 @@ import (
 )
 
 type statusState struct {
+	cards     widget.List
 	groupID   string
 	menu, add widget.Clickable
 	list      widget.List

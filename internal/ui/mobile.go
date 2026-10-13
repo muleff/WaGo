@@ -36,6 +36,23 @@ func (u *UI) layoutMobileMain(gtx C) D {
 	default:
 		u.layoutPageSidebar(content)
 	}
+	if navH > 0 && !inChat && (u.page == pageChats || u.page == pageStatus) && !u.newChat.open() {
+		size := gtx.Dp(56)
+		t := op.Offset(image.Pt(max(0, sz.X-size-gtx.Dp(16)), max(0, sz.Y-navH-size-gtx.Dp(16)))).Push(gtx.Ops)
+		g := gtx
+		g.Constraints = layout.Exact(image.Pt(size, size))
+		c := &u.sidebar.newChat
+		ic := icNewChat
+		if u.page == pageStatus {
+			c = &u.status.add
+			ic = icAddPhoto
+		}
+		clickable(g, c, func(gtx C) D {
+			fillRRect(gtx, image.Rectangle{Max: gtx.Constraints.Max}, gtx.Dp(16), u.pal.Green)
+			return centerIn(gtx, size, iconW(ic, 27, u.pal.OnGreen))
+		})
+		t.Pop()
+	}
 	if navH > 0 {
 		nav := gtx
 		nav.Constraints = layout.Exact(image.Pt(sz.X, navH))
@@ -67,16 +84,23 @@ func (u *UI) layoutMobileNavigation(gtx C) D {
 					}
 					return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
-							switch tab.page {
-							case pageChats:
-								return chatsOutline(gtx, 24, col)
-							case pageStatus:
-								return statusIcon(gtx, 24, col, active)
-							case pageCommunities:
-								return drawIcon(gtx, icGroupsLine, 24, col)
-							default:
-								return drawIcon(gtx, icCall, 24, col)
+							w, h := gtx.Dp(60), gtx.Dp(30)
+							gtx.Constraints = layout.Exact(image.Pt(w, h))
+							if active {
+								fillRRect(gtx, image.Rect(0, 0, w, h), h/2, p.ChipActive)
 							}
+							return layout.Center.Layout(gtx, func(gtx C) D {
+								switch tab.page {
+								case pageChats:
+									return chatsOutline(gtx, 25, col)
+								case pageStatus:
+									return statusIcon(gtx, 25, col, active)
+								case pageCommunities:
+									return drawIcon(gtx, icGroupsLine, 25, col)
+								default:
+									return drawIcon(gtx, icCall, 25, col)
+								}
+							})
 						}), layout.Rigid(layout.Spacer{Height: 5}.Layout),
 						layout.Rigid(u.label(12, u.locale.Text(tab.label), col, labelOpts{weight: font.Medium, maxLines: 2, align: text.Middle}).Layout))
 				})

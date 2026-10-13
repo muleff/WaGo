@@ -50,3 +50,32 @@ int wago_request(uintptr_t vmPtr, uintptr_t ctxPtr, long long id, int kind, cons
  if (detach) (*vm)->DetachCurrentThread(vm);
  return status;
 }
+
+char *wago_timezone(uintptr_t rawvm) {
+ JavaVM *vm=(JavaVM *)rawvm;JNIEnv *env=NULL;int attached=0;char *out=NULL;
+ if ((*vm)->GetEnv(vm,(void **)&env,JNI_VERSION_1_6)!=JNI_OK) {
+  if ((*vm)->AttachCurrentThread(vm,&env,NULL)!=JNI_OK) return NULL;
+  attached=1;
+ }
+ jclass cls=(*env)->FindClass(env,"java/util/TimeZone");
+ if (cls) {
+  jmethodID get=(*env)->GetStaticMethodID(env,cls,"getDefault","()Ljava/util/TimeZone;");
+  jmethodID id=(*env)->GetMethodID(env,cls,"getID","()Ljava/lang/String;");
+  if (get && id) {
+   jobject zone=(*env)->CallStaticObjectMethod(env,cls,get);
+   if (zone) {
+    jstring name=(jstring)(*env)->CallObjectMethod(env,zone,id);
+    if (name) {
+     const char *str=(*env)->GetStringUTFChars(env,name,NULL);
+     if(str) {out=strdup(str);(*env)->ReleaseStringUTFChars(env,name,str);}
+     (*env)->DeleteLocalRef(env,name);
+    }
+    (*env)->DeleteLocalRef(env,zone);
+   }
+  }
+  (*env)->DeleteLocalRef(env,cls);
+ }
+ if ((*env)->ExceptionCheck(env)) {(*env)->ExceptionClear(env);free(out);out=NULL;}
+ if(attached) (*vm)->DetachCurrentThread(vm);
+ return out;
+}

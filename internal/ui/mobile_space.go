@@ -48,3 +48,10 @@ func (u *UI) paintSystemInsets(gtx C, e app.FrameEvent) {
 	}
 	off.Pop()
 }
+
+func (u *UI) layoutWallpaper(gtx C) D {
+	if u.mobile {
+		gtx.Metric.PxPerDp *= 0.65
+	}
+	return u.conv.wallpaper.layout(gtx, u.pal.ChatBg, u.pal.Doodle, u.doodles)
+}

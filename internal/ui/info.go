@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"math"
 	"strings"
+	"time"
 
 	"gioui.org/f32"
 	"gioui.org/font"
@@ -299,7 +300,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 				u.info.allMembers = true
 			}
 			return u.contentInset(layout.Inset{Left: infoPadX + 66, Top: 10, Bottom: 10}).Layout(gtx, func(gtx C) D {
-				return clickable(gtx, c, u.label(16.5, fmt.Sprintf("View all (%d more)", more), p.Green).Layout)
+				return clickable(gtx, c, u.label(16.5, u.locale.Textf("View all (%d more)", more), p.Green).Layout)
 			})
 		})
 	}
@@ -323,11 +324,11 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 	}
 	rows = append(rows, u.infoRow("report", listItem{ic: icThumbDown, title: u.locale.Text("Report group"), danger: true}, u.reportUnsupported))
 	if !info.Created.IsZero() {
-		by := ""
+		date, clock := info.Created.In(time.Local).Format("02/01/2006"), u.clockText(info.Created)
+		txt := u.locale.Textf("Group created on %s at %s", date, clock)
 		if info.CreatedBy != "" {
-			by = " by " + info.CreatedBy
+			txt = u.locale.Textf("Group created by %s on %s at %s", info.CreatedBy, date, clock)
 		}
-		txt := "Group created" + by + ", on " + info.Created.Format("02/01/2006") + " at " + info.Created.Format("15:04")
 		rows = append(rows, func(gtx C) D {
 			return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 15.5, Bottom: 40}).Layout(gtx,
 				u.label(15, txt, p.TextSecondary, labelOpts{maxLines: 2}).Layout)

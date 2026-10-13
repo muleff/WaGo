@@ -87,7 +87,7 @@ func (u *UI) layoutStickerRow(gtx C, c *model.Chat, r convRow, maxW, margin int)
 	if hasHead {
 		head.at(gtx, shift, 0)
 	}
-	if c.IsGroup && r.first && !out {
+	if c.IsGroup && r.first && !out && !u.mobile {
 		// The sender's avatar sits in the left margin, level with the top.
 		sz := gtx.Dp(29)
 		t := op.Offset(image.Pt(shift-min(gtx.Dp(40), margin), 0)).Push(gtx.Ops)

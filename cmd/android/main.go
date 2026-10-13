@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	_ "time/tzdata"
 
 	"gioui.org/app"
 
@@ -25,6 +26,9 @@ import (
 
 func main() {
 	debug.SetGCPercent(50)
+	if err := androidbridge.ConfigureLocalTime(); err != nil {
+		log.Print(err)
+	}
 
 	// Gio resolves Android's private Context.getFilesDir() directory.
 	// This must be called from main, after Android has initialized Gio.

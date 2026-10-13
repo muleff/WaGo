@@ -30,7 +30,7 @@ func TestAndroidScreenshots(t *testing.T) {
 	}{
 		{"", image.Pt(390, 780), 1}, {"-320", image.Pt(320, 640), 1}, {"-landscape", image.Pt(780, 390), 1}, {"-keyboard", image.Pt(320, 280), 1}, {"-large-text", image.Pt(390, 780), 1.4},
 	} {
-		for _, view := range []string{"chats", "conversation", "contact", "updates", "login", "settings", "profile", "general", "privacy", "newchat", "communities", "calls"} {
+		for _, view := range []string{"chats", "conversation", "lastseen", "reply", "contact", "updates", "login", "settings", "profile", "general", "privacy", "newchat", "communities", "calls"} {
 			u := New(mock.NewReference())
 			u.mobile = true
 			u.Start(func() {})
@@ -61,6 +61,17 @@ func TestAndroidScreenshots(t *testing.T) {
 			}
 			if view == "newchat" {
 				u.ShowOverlay("newchat", 0, 0)
+			}
+			if view == "lastseen" || view == "reply" {
+				u.SelectID("test@g.us")
+				if view == "lastseen" {
+					u.selected.IsGroup = false
+					u.selected.Name = "Yosue"
+					u.selected.Presence = "last seen yesterday at 20:30"
+				}
+				if view == "reply" && len(u.msgs) > 0 {
+					u.startReply(u.msgs[len(u.msgs)-1])
+				}
 			}
 			if view == "contact" {
 				u.SelectID("test@g.us")

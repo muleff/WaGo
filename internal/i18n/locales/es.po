@@ -1804,3 +1804,192 @@ msgstr "Contactos en WhatsApp"
 
 msgid "Add group members"
 msgstr "Añadir miembros al grupo"
+
+msgid "online"
+msgstr "en línea"
+
+msgid "typing…"
+msgstr "escribiendo…"
+
+msgid "last seen %s"
+msgstr "últ. vez %s"
+
+msgid "today at %s"
+msgstr "hoy a las %s"
+
+msgid "yesterday at %s"
+msgstr "ayer a las %s"
+
+msgid "%s at %s"
+msgstr "%s a las %s"
+
+msgid "%s is typing…"
+msgstr "%s está escribiendo…"
+
+msgid "%s and %s are typing…"
+msgstr "%s y %s están escribiendo…"
+
+msgid "%s, %s and %s are typing…"
+msgstr "%s, %s y %s están escribiendo…"
+
+msgid "%s, %s and %d others are typing…"
+msgstr "%s, %s y %d más están escribiendo…"
+
+msgid "Photos & videos"
+msgstr "Fotos y videos"
+
+msgid "Status privacy"
+msgstr "Privacidad de estados"
+
+msgid "Explore"
+msgstr "Explorar"
+
+msgid "Add status"
+msgstr "Añadir estado"
+
+msgid "Photo"
+msgstr "Foto"
+
+msgid "Draft: "
+msgstr "Borrador: "
+
+msgid "Edited"
+msgstr "Editado"
+
+msgid "followers"
+msgstr "seguidores"
+
+msgid "follower"
+msgstr "seguidor"
+
+msgid "Announcements"
+msgstr "Avisos"
+
+msgid "Archived"
+msgstr "Archivados"
+
+msgid "Add group icon"
+msgstr "Añadir imagen del grupo"
+
+msgid "Message this number"
+msgstr "Enviar mensaje a este número"
+
+msgid "Checking…"
+msgstr "Comprobando…"
+
+msgid "No contacts left to add"
+msgstr "No quedan contactos para añadir"
+
+msgid "No results found for '%s'"
+msgstr "No se encontraron resultados para «%s»"
+
+msgid "Your contacts on WhatsApp show here once your phone has synced them. Type a phone number with its country code to message it."
+msgstr "Aquí aparecerán tus contactos cuando se sincronicen desde tu teléfono. Introduce un número con su código de país para enviarle un mensaje."
+
+msgid "Type a status"
+msgstr "Escribe un estado"
+
+msgid "Group name"
+msgstr "Nombre del grupo"
+
+msgid "Change picture"
+msgstr "Cambiar imagen"
+
+msgid "Remove picture"
+msgstr "Eliminar imagen"
+
+msgid "Group status"
+msgstr "Estado del grupo"
+
+msgid "Only photos and videos can be posted to your status."
+msgstr "Solo puedes publicar fotos y videos en tu estado."
+
+msgid "Choose photos, videos or audio for this group status."
+msgstr "Elige fotos, videos o audio para el estado del grupo."
+
+msgid "Send or close the files you're attaching to a chat first."
+msgstr "Primero envía o cierra los archivos adjuntos del chat."
+
+msgid "Send or close your current attachments first."
+msgstr "Primero envía o cierra los archivos adjuntos."
+
+msgid "Choose audio for group status"
+msgstr "Elige audio para el estado del grupo"
+
+msgid "Give the group a name first."
+msgstr "Primero escribe un nombre para el grupo."
+
+msgid "Choose a group picture"
+msgstr "Elige una imagen para el grupo"
+
+msgid "Checking who can see your status updates…"
+msgstr "Comprobando quién puede ver tus estados…"
+
+msgid "Your status updates are shared with all your contacts."
+msgstr "Tus estados se comparten con todos tus contactos."
+
+msgid "Changes won't affect status updates you've already posted."
+msgstr "Los cambios no afectarán a los estados que ya publicaste."
+
+msgid "View all (%d more)"
+msgstr "Ver todos (%d más)"
+
+msgid "Group created by %s on %s at %s"
+msgstr "Grupo creado por %s el %s a las %s"
+
+msgid "Group created on %s at %s"
+msgstr "Grupo creado el %s a las %s"
+
+msgid "at"
+msgstr "a las"
+
+msgid "Voice message"
+msgstr "Mensaje de voz"
+
+msgid "Sticker"
+msgstr "Sticker"
+
+msgid "Document"
+msgstr "Documento"
+
+msgid "Location"
+msgstr "Ubicación"
+
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "Poll"
+msgstr "Encuesta"
+
+msgid "Message deleted"
+msgstr "Mensaje eliminado"
+
+msgid "Font size"
+msgstr "Tamaño de letra"
+
+msgid "Use Ctrl + / − to change the text size"
+msgstr "Usa Ctrl + / − para cambiar el tamaño del texto"
+
+msgid "You"
+msgstr "Tú"
+
+msgid "This message was deleted"
+msgstr "Se eliminó este mensaje"
+
+msgid "You deleted this message"
+msgstr "Eliminaste este mensaje"
+
+msgid "This message couldn't load"
+msgstr "No se pudo cargar este mensaje"
+
+msgid "This message couldn't load. Open the message on your phone to view it."
+msgstr "No se pudo cargar este mensaje. Ábrelo en tu teléfono para verlo."
+
+msgid "🔒 Messages and calls are end-to-end encrypted. Only people in this chat can read, listen to, or share them."
+msgstr "🔒 Los mensajes y las llamadas están cifrados de extremo a extremo. Solo las personas de este chat pueden leerlos, escucharlos o compartirlos."
+
+msgid "Adding a caption"
+msgstr "Añadiendo una descripción"
+
+msgid "Creating a poll"
+msgstr "Creando una encuesta"

@@ -162,7 +162,7 @@ func (u *UI) starredRow(gtx C, m *model.Message, all bool) D {
 	}
 	txt := plainText(m.Text)
 	if m.Media != model.MediaNone {
-		txt = mediaLabel(m)
+		txt = u.mediaText(m)
 	}
 	return clickable(gtx, c, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X

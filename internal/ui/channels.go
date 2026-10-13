@@ -91,7 +91,7 @@ func (u *UI) layoutChannelList(gtx C) D {
 		layout.Rigid(func(gtx C) D {
 			return u.pageHeader(gtx, u.locale.Text("Channels"), u.headerButton(&u.channel.add, icAddCircle, 27))
 		}),
-		layout.Rigid(func(gtx C) D { return u.searchBox(gtx, &u.channel.search, "Search") }),
+		layout.Rigid(func(gtx C) D { return u.searchBox(gtx, &u.channel.search, u.locale.Text("Search")) }),
 		layout.Flexed(1, func(gtx C) D {
 			return u.scrollList(gtx, &u.channel.list, n, func(gtx C, i int) D {
 				if i < len(followed) {
@@ -103,13 +103,13 @@ func (u *UI) layoutChannelList(gtx C) D {
 				i -= len(followed)
 				switch {
 				case i == 0:
-					return u.sectionLabel(gtx, "Find channels to follow", layout.Inset{Left: 20, Top: 24, Bottom: 10},
+					return u.sectionLabel(gtx, u.locale.Text("Find channels to follow"), layout.Inset{Left: 20, Top: 24, Bottom: 10},
 						labelOpts{weight: font.SemiBold, maxLines: 1})
 				case i <= len(suggested):
 					return u.suggestedRow(gtx, suggested[i-1])
 				}
 				return u.contentInset(layout.Inset{Left: 20, Right: 30, Top: 14, Bottom: 20}).Layout(gtx, func(gtx C) D {
-					return u.outlineButton(gtx, &u.channel.discover, "Discover more")
+					return u.outlineButton(gtx, &u.channel.discover, u.locale.Text("Discover more"))
 				})
 			})
 		}),

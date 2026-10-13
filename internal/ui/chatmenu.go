@@ -31,7 +31,7 @@ func (u *UI) convMenuItems(c *model.Chat) []menuItem {
 	var items []menuItem
 	add := func(it menuItem) { items = append(items, it) }
 	if isChannelID(id) {
-		add(menuItem{key: "close", ic: icCancel, label: "Close chat", run: u.closeChat})
+		add(menuItem{key: "close", ic: icCancel, label: u.locale.Text("Close chat"), run: u.closeChat})
 		return items
 	}
 	if c.IsGroup {
@@ -49,7 +49,7 @@ func (u *UI) convMenuItems(c *model.Chat) []menuItem {
 	} else {
 		add(menuItem{key: "mute", ic: icMuted, label: u.locale.Text("Mute notifications"), run: func() { u.openMuteMenu(c) }})
 	}
-	add(menuItem{key: "timer", glyph: disappearingIcon, label: ("Disappearing messages"), run: func() { u.openTimerMenu(c) }})
+	add(menuItem{key: "timer", glyph: disappearingIcon, label: u.locale.Text("Disappearing messages"), run: func() { u.openTimerMenu(c) }})
 	if c.Favorite {
 		add(menuItem{key: "fav", ic: icHeart, label: u.locale.Text("Remove from favourites"), run: func() { b.SetFavorite(id, false) }})
 	} else {

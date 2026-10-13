@@ -43,7 +43,7 @@ func (u *UI) statusFiles(files []*attachFile) []*attachFile {
 		if u.status.groupID != "" {
 			message = "Choose photos, videos or audio for this group status."
 		}
-		u.toast(message)
+		u.toast(u.locale.Text(message))
 	}
 	return keep
 }
@@ -55,25 +55,25 @@ func (u *UI) openStatusAdd() {
 
 func (u *UI) statusAddItems() []menuItem {
 	items := []menuItem{
-		{key: "st-photos", ic: icPhotosFill, label: "Photos & videos", run: u.pickStatusMedia},
-		{key: "st-text", ic: icEdit, label: "Text", run: u.openStatusText},
+		{key: "st-photos", ic: icPhotosFill, label: u.locale.Text("Photos & videos"), run: u.pickStatusMedia},
+		{key: "st-text", ic: icEdit, label: u.locale.Text("Text"), run: u.openStatusText},
 	}
 	if u.status.groupID != "" {
-		items = append(items, menuItem{key: "st-audio", ic: icMic, label: "Audio", run: u.pickGroupStatusAudio})
+		items = append(items, menuItem{key: "st-audio", ic: icMic, label: u.locale.Text("Audio"), run: u.pickGroupStatusAudio})
 	}
 	return items
 }
 
 func (u *UI) statusMenuItems() []menuItem {
 	return []menuItem{
-		{key: "st-privacy", ic: icLockOutline, label: "Status privacy", run: u.openStatusPrivacy},
+		{key: "st-privacy", ic: icLockOutline, label: u.locale.Text("Status privacy"), run: u.openStatusPrivacy},
 	}
 }
 
 // pickStatusMedia opens the file dialog for photos and videos to post.
 func (u *UI) pickStatusMedia() {
 	if a := &u.attach; len(a.files) > 0 && a.chatID != u.statusDestination() {
-		u.toast("Send or close the files you're attaching to a chat first.")
+		u.toast(u.locale.Text("Send or close the files you're attaching to a chat first."))
 		return
 	}
 	u.pickFiles(u.statusDestination(), "Choose photos and videos", []filepick.Filter{
@@ -88,7 +88,7 @@ func (u *UI) openStatusPrivacy() {
 	b := u.backend
 	u.dialog = dialogState{kind: dialogConfirm, title: "Status privacy",
 		bodyFn:  func() string { return statusPrivacyText(b.StatusPrivacy()) },
-		buttons: []dialogButton{{label: "OK", primary: true}}}
+		buttons: []dialogButton{{label: u.locale.Text("OK"), primary: true}}}
 }
 
 func statusPrivacyText(p *model.StatusPrivacy) string {
@@ -244,7 +244,7 @@ func (u *UI) layoutStatusText(gtx C) {
 	w := min(sz.X-2*gtx.Dp(80), gtx.Dp(720))
 	box := record(gtx, func(gtx C) D {
 		gtx.Constraints = layout.Constraints{Min: image.Pt(w, 0), Max: image.Pt(w, max(0, sz.Y-gtx.Dp(200)))}
-		ed := material.Editor(u.th, &s.ed, "Type a status")
+		ed := material.Editor(u.th, &s.ed, u.locale.Text("Type a status"))
 		ed.TextSize = statusTextSize(n)
 		ed.Color = white
 		ed.HintColor = argb(0xffffff, 0xb0)
@@ -254,9 +254,9 @@ func (u *UI) layoutStatusText(gtx C) {
 	box.at(gtx, (sz.X-w)/2, (sz.Y-box.size.Y)/2)
 
 	if s.groupID != "" {
-		name := "Group status"
+		name := u.locale.Text("Group status")
 		if c := u.chatByID(s.groupID); c != nil {
-			name = "Status · " + c.Name
+			name = u.locale.Text("Status") + " · " + c.Name
 		}
 		label := record(gtx, func(gtx C) D {
 			gtx.Constraints.Min = image.Point{}
@@ -304,7 +304,7 @@ func (u *UI) statusDestination() string {
 }
 func (u *UI) pickGroupStatusAudio() {
 	if a := &u.attach; len(a.files) > 0 && a.chatID != u.statusDestination() {
-		u.toast("Send or close your current attachments first.")
+		u.toast(u.locale.Text("Send or close your current attachments first."))
 		return
 	}
 	u.pickFiles(u.statusDestination(), "Choose audio for group status", []filepick.Filter{{Name: "Audio", Exts: []string{"ogg", "opus", "mp3", "m4a", "wav", "aac"}}})

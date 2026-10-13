@@ -136,7 +136,7 @@ func (u *UI) layoutChatSearch(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &s.closeBtn, icClose, 40, 25, p.IconStrong) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
-						layout.Flexed(1, u.label(16.5, "Search messages", p.Text, labelOpts{maxLines: 1}).Layout),
+						layout.Flexed(1, u.label(16.5, u.locale.Text("Search messages"), p.Text, labelOpts{maxLines: 1}).Layout),
 					)
 				})
 			})

@@ -91,6 +91,9 @@ func (u *UI) barList(gtx C, l *widget.List, n int, el layout.ListElement) D {
 		col.A = 0x90
 	}
 	bw := gtx.Dp(5)
+	if u.mobile {
+		bw = gtx.Dp(2)
+	}
 	x := w - pad - bw
 	fillRRect(gtx, image.Rect(x, top, x+bw, top+thumb), gtx.Dp(3), col)
 	return dims
