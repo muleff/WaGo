@@ -1,6 +1,7 @@
 package wa
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
@@ -14,7 +15,7 @@ import (
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 	"github.com/polymorfa/hypermeow/types"
 	"github.com/polymorfa/hypermeow/types/events"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -93,16 +94,26 @@ func (b *Backend) MessagePayloadWithAdditionalNodes(chat, id string) (string, er
 		return "", err
 	}
 	var nodes []byte
-	if err := b.db.QueryRowContext(b.ctx, `SELECT additional_nodes FROM wz_messages WHERE chat = ? AND id = ?`, chat, id).Scan(&nodes); err != nil {
-		return "", err
+	err = b.db.QueryRowContext(b.ctx, `SELECT additional_nodes FROM wz_messages WHERE chat = ? AND id = ?`, chat, id).Scan(&nodes)
+	if (err != nil || len(nodes) == 0) && chat != "" {
+		if j, pErr := types.ParseJID(chat); pErr == nil {
+			canon := b.canonical(b.ctx, j).String()
+			if canon != chat {
+				_ = b.db.QueryRowContext(b.ctx, `SELECT additional_nodes FROM wz_messages WHERE chat = ? AND id = ?`, canon, id).Scan(&nodes)
+			}
+		}
 	}
+	if (err != nil || len(nodes) == 0) && id != "" {
+		_ = b.db.QueryRowContext(b.ctx, `SELECT additional_nodes FROM wz_messages WHERE id = ? AND additional_nodes IS NOT NULL`, id).Scan(&nodes)
+	}
+	hasNodes := len(nodes) > 0 && string(bytes.TrimSpace(nodes)) != "null" && string(bytes.TrimSpace(nodes)) != "[]"
 	out := struct {
 		Message                  json.RawMessage `json:"message"`
 		AdditionalNodes          json.RawMessage `json:"additionalNodes"`
 		AdditionalNodesAvailable bool            `json:"additionalNodesAvailable"`
 		Note                     string          `json:"note,omitempty"`
-	}{Message: payload, AdditionalNodes: json.RawMessage("null"), AdditionalNodesAvailable: nodes != nil}
-	if nodes != nil {
+	}{Message: payload, AdditionalNodes: json.RawMessage("null"), AdditionalNodesAvailable: hasNodes}
+	if hasNodes {
 		out.AdditionalNodes = nodes
 	} else {
 		out.Note = "No raw additionalNodes metadata was captured for this message."
