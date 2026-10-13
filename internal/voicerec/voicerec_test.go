@@ -98,6 +98,22 @@ Error opening input file dummy.`
 	}
 }
 
+func TestQuotedDeviceNameFormats(t *testing.T) {
+	for _, tc := range []struct {
+		line string
+		name string
+	}{
+		{`"USB Microphone" (audio)`, "USB Microphone"},
+		{`'Headset Mic' (audio)`, "Headset Mic"},
+		{`“Micrófono integrado” (audio)`, "Micrófono integrado"},
+		{`Alternative name "@device_cm_1"`, "@device_cm_1"},
+	} {
+		if got, ok := quotedDeviceName(tc.line); !ok || got != tc.name {
+			t.Errorf("quotedDeviceName(%q) = %q, %v; want %q", tc.line, got, ok, tc.name)
+		}
+	}
+}
+
 func TestDirectShowSupportAndPermissionClassification(t *testing.T) {
 	if !supportsDirectShow([]byte("Devices:\n D. = Demuxing supported\n D  dshow DirectShow capture\n")) ||
 		supportsDirectShow([]byte("Devices:\n D  avfoundation AVFoundation\n")) {

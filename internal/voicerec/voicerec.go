@@ -36,6 +36,9 @@ type Recorder struct {
 // Start finds an input device and begins recording. The caller must call
 // Finish or Abort; the supplied context also terminates the recording.
 func Start(ctx context.Context) (*Recorder, error) {
+	if err := microphonePermission(); err != nil {
+		return nil, err
+	}
 	bin, err := findFFmpeg(ctx)
 	if err != nil {
 		return nil, err
@@ -362,7 +365,7 @@ func quotedDeviceName(line string) (string, bool) {
 		start := strings.IndexRune(line, q.open)
 		if start >= 0 {
 			rest := line[start+len(string(q.open)):]
-			end := strings.LastIndexRune(rest, q.close)
+			end := strings.LastIndex(rest, string(q.close))
 			if end >= 0 {
 				res := strings.TrimSpace(rest[:end])
 				if res != "" {

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/muleff/WaGo/internal/model"
+	whatsmeow "github.com/polymorfa/hypermeow"
 )
 
 func box(typ string, body []byte) []byte {

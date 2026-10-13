@@ -54,6 +54,23 @@ func (u *UI) beginVoiceRecord() {
 		u.toast("Microphone recording requires an active app window.")
 		return
 	}
+	if runtime.GOOS == "windows" && !u.microphoneConsent {
+		u.confirm("Microphone permission",
+			"WaGo wants to use your microphone to record voice messages. Audio is recorded only while you choose to record. Windows may also require microphone access to be enabled in Privacy settings.",
+			dialogButton{label: "Allow microphone", primary: true, run: func() {
+				u.microphoneConsent = true
+				u.startVoiceRecord()
+			}},
+		)
+		return
+	}
+	u.startVoiceRecord()
+}
+
+func (u *UI) startVoiceRecord() {
+	if u.selected == nil || u.voiceRecord.phase != recordIdle || u.ghostMode() || u.window == nil {
+		return
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	r := &u.voiceRecord
 	r.phase, r.chatID, r.ctx, r.cancel = recordStarting, u.selected.ID, ctx, cancel
@@ -188,9 +205,9 @@ func (u *UI) updateVoiceRecord() {
 	}
 }
 
-// Classic Windows desktop applications cannot request microphone access with
-// a runtime permission dialog. Offer the user a route to the OS settings if
-// capture reports a missing microphone or an explicit access-denied error.
+// A classic Win32 app can ask for consent in its own UI, but cannot force
+// Windows' per-app system permission prompt. When Windows denies capture,
+// offer the OS microphone privacy settings instead.
 func (u *UI) reportVoiceCaptureError(err error) {
 	if runtime.GOOS == "windows" &&
 		(errors.Is(err, voicerec.ErrNoMicrophone) || errors.Is(err, voicerec.ErrMicrophoneAccess)) {

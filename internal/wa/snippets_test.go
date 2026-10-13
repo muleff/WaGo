@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/muleff/WaGo/internal/model"
 	whatsmeow "github.com/polymorfa/hypermeow"
 	waBinary "github.com/polymorfa/hypermeow/binary"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
@@ -18,7 +19,6 @@ import (
 	"github.com/polymorfa/hypermeow/types"
 	"github.com/polymorfa/hypermeow/types/events"
 	waLog "github.com/polymorfa/hypermeow/util/log"
-	"github.com/muleff/WaGo/internal/model"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/encoding/protowire"
 	"google.golang.org/protobuf/proto"

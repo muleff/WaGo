@@ -141,10 +141,11 @@ type UI struct {
 	// the backend has looked it up, and cardPhoneName their name.
 	cardPhone, cardPhoneName string
 
-	files       fileState        // documents and audio on disk
-	voice       voiceState       // the audio message playing
-	voiceRecord voiceRecordState // microphone recording and send lifecycle
-	attach      attachState      // files picked to send
+	files             fileState        // documents and audio on disk
+	voice             voiceState       // the audio message playing
+	voiceRecord       voiceRecordState // microphone recording and send lifecycle
+	microphoneConsent bool             // user approved microphone use in this window
+	attach            attachState      // files picked to send
 
 	menu       menuState
 	filterMenu filterMenuState

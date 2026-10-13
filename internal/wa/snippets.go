@@ -11,11 +11,11 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/muleff/WaGo/internal/model"
 	waBinary "github.com/polymorfa/hypermeow/binary"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 	"github.com/polymorfa/hypermeow/types"
 	"github.com/polymorfa/hypermeow/types/events"
-	"github.com/muleff/WaGo/internal/model"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )

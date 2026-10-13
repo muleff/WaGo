@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/muleff/WaGo/internal/model"
 	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
-	"github.com/muleff/WaGo/internal/model"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )

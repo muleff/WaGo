@@ -5,11 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/muleff/WaGo/internal/model"
 	"github.com/polymorfa/hypermeow/proto/waCommon"
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 	"github.com/polymorfa/hypermeow/types"
 	"github.com/polymorfa/hypermeow/types/events"
-	"github.com/muleff/WaGo/internal/model"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
