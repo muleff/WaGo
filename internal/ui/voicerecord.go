@@ -209,20 +209,31 @@ func (u *UI) updateVoiceRecord() {
 // Windows' per-app system permission prompt. When Windows denies capture,
 // offer the OS microphone privacy settings instead.
 func (u *UI) reportVoiceCaptureError(err error) {
-	if runtime.GOOS == "windows" &&
-		(errors.Is(err, voicerec.ErrNoMicrophone) || errors.Is(err, voicerec.ErrMicrophoneAccess)) {
-		body := "Windows could not find an available microphone. Check that a microphone is connected and enabled, and that desktop apps can access it in Windows Settings."
-		if errors.Is(err, voicerec.ErrMicrophoneAccess) {
-			body = "Windows denied microphone access. Check Microphone access and Let desktop apps access your microphone in Windows Settings."
+	if runtime.GOOS == "windows" {
+		body := "Microphone capture failed: " + err.Error()
+		switch {
+		case errors.Is(err, voicerec.ErrMicrophoneAccess):
+			body = "Windows blocked microphone access. Enable microphone access for desktop apps in Windows Settings."
+		case errors.Is(err, voicerec.ErrNoMicrophone):
+			body = "FFmpeg did not detect an audio input. This may be a device or driver issue, not necessarily a missing microphone. Copy the debug details to investigate."
 		}
-		u.confirm("Microphone unavailable", body, dialogButton{
-			label: "Open microphone settings", primary: true,
-			run: func() {
-				if !openTarget("ms-settings:privacy-microphone") {
-					u.toast("Couldn't open Windows microphone settings.")
-				}
+		u.confirm("Microphone unavailable", body,
+			dialogButton{
+				label: "Copy debug details", primary: true,
+				run: func() {
+					u.pendingCopy = voicerec.DiagnosticReport()
+					u.toast("Microphone diagnostics copied. Review them before sharing.")
+				},
 			},
-		})
+			dialogButton{
+				label: "Microphone settings",
+				run: func() {
+					if !openTarget("ms-settings:privacy-microphone") {
+						u.toast("Couldn't open Windows microphone settings.")
+					}
+				},
+			},
+		)
 		return
 	}
 	u.toast(err.Error())

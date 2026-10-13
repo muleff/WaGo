@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -36,17 +35,24 @@ type Recorder struct {
 // Start finds an input device and begins recording. The caller must call
 // Finish or Abort; the supplied context also terminates the recording.
 func Start(ctx context.Context) (*Recorder, error) {
+	resetCaptureDiagnostics()
+	captureDebug("Starting microphone detection")
 	if err := microphonePermission(); err != nil {
+		captureDebug("Windows microphone privacy check: %v", err)
 		return nil, err
 	}
 	bin, err := findFFmpeg(ctx)
 	if err != nil {
+		captureDebug("FFmpeg selection failed: %v", err)
 		return nil, err
 	}
+	captureDebug("Selected FFmpeg: %s", bin)
 	input, err := inputArgs(ctx, bin)
 	if err != nil {
+		captureDebug("Input selection failed: %v", err)
 		return nil, err
 	}
+	captureDebug("Selected input: %q", input)
 	f, err := os.CreateTemp("", "wago-voice-*.ogg")
 	if err != nil {
 		return nil, err
@@ -58,7 +64,7 @@ func Start(ctx context.Context) (*Recorder, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	args := append([]string{"-hide_banner", "-loglevel", "error", "-nostats", "-y"}, input...)
 	args = append(args, opusEncodeArgs(path)...)
-	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd := ffmpegCommand(ctx, bin, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		cancel()
@@ -67,12 +73,18 @@ func Start(ctx context.Context) (*Recorder, error) {
 	r := &Recorder{path: path, cmd: cmd, stdin: stdin, cancel: cancel, done: make(chan struct{})}
 	cmd.Stderr = &r.log
 	if err := cmd.Start(); err != nil {
+		captureDebug("FFmpeg capture failed to start: %v", err)
 		_ = stdin.Close()
 		cancel()
 		return nil, fmt.Errorf("could not start microphone capture: %w", err)
 	}
 	go func() {
 		err := cmd.Wait()
+		if err != nil {
+			captureDebug("FFmpeg exited with error: %v; stderr: %s", err, tailLog(r.log.String()))
+		} else {
+			captureDebug("FFmpeg capture exited successfully")
+		}
 		r.mu.Lock()
 		r.err = err
 		r.mu.Unlock()
@@ -126,8 +138,13 @@ func findFFmpeg(ctx context.Context) (string, error) {
 			continue
 		}
 		check, cancel := context.WithTimeout(ctx, 4*time.Second)
-		out, err := exec.CommandContext(check, bin, "-hide_banner", "-encoders").CombinedOutput()
+		out, err := ffmpegCommand(check, bin, "-hide_banner", "-encoders").CombinedOutput()
 		cancel()
+		if err != nil {
+			captureDebug("FFmpeg encoder probe failed for %s: %v", bin, err)
+		} else if !bytes.Contains(out, []byte("libopus")) {
+			captureDebug("FFmpeg at %s does not provide libopus", bin)
+		}
 		if err == nil && bytes.Contains(out, []byte("libopus")) {
 			if runtime.GOOS != "windows" {
 				return bin, nil
@@ -135,11 +152,12 @@ func findFFmpeg(ctx context.Context) (string, error) {
 			// A usable encoder does not imply that this build can capture
 			// DirectShow devices. Check the input driver before selecting it.
 			check, stop := context.WithTimeout(ctx, 4*time.Second)
-			devices, deviceErr := exec.CommandContext(check, bin, "-hide_banner", "-devices").CombinedOutput()
+			devices, deviceErr := ffmpegCommand(check, bin, "-hide_banner", "-devices").CombinedOutput()
 			stop()
 			if deviceErr == nil && supportsDirectShow(devices) {
 				return bin, nil
 			}
+			captureDebug("FFmpeg DirectShow probe at %s: error=%v; supported=%v; output=%s", bin, deviceErr, supportsDirectShow(devices), tailLog(string(devices)))
 		}
 		if err := ctx.Err(); err != nil {
 			return "", err
@@ -223,11 +241,12 @@ func inputArgs(ctx context.Context, bin string) ([]string, error) {
 		// Enumeration intentionally exits nonzero. Recent FFmpeg versions
 		// identify each device with '(audio)' rather than a DirectShow heading.
 		check, cancel := context.WithTimeout(ctx, 8*time.Second)
-		cmd := exec.CommandContext(check, bin, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
+		cmd := ffmpegCommand(check, bin, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
 		out, cmdErr := cmd.CombinedOutput()
 		checkErr := check.Err()
 		cancel()
 		devices := parseWindowsAudioDevices(string(out))
+		captureDebug("DirectShow device listing: exit=%v, timeout=%v, microphones=%d\n%s", cmdErr, checkErr, len(devices), string(out))
 		if err := ctx.Err(); err != nil {
 			return nil, err
 		}
@@ -246,6 +265,7 @@ func inputArgs(ctx context.Context, bin string) ([]string, error) {
 			}
 			return nil, ErrNoMicrophone
 		}
+		captureDebug("Selected microphone: %s", devices[0].name)
 		return windowsCaptureArgs(devices[0]), nil
 	case "darwin":
 		return []string{"-f", "avfoundation", "-i", ":0"}, nil
@@ -405,7 +425,6 @@ func isDeviceEnumerationOutput(output string) bool {
 		strings.Contains(lower, "(audio)") ||
 		strings.Contains(lower, "(video)") ||
 		strings.Contains(lower, "(none)") ||
-		strings.Contains(lower, "error opening input file dummy") ||
 		strings.Contains(lower, "no devices found")
 }
 

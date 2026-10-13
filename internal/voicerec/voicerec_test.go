@@ -3,6 +3,7 @@ package voicerec
 import (
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -95,6 +96,22 @@ Error opening input file dummy.`
 	}
 	if !isDeviceEnumerationOutput(output) || isDeviceEnumerationOutput("Unknown input format: 'dshow'") {
 		t.Fatal("failed to distinguish no microphones from unsupported DirectShow")
+	}
+}
+
+func TestDeviceListingFailureIsNotMistakenForNoMicrophone(t *testing.T) {
+	if isDeviceEnumerationOutput("Error opening input file dummy.") {
+		t.Fatal("an FFmpeg input failure does not prove there are no microphones")
+	}
+}
+
+func TestMicrophoneDiagnostics(t *testing.T) {
+	resetCaptureDiagnostics()
+	captureDebug("Microphones detected: %d", 2)
+	report := DiagnosticReport()
+	if !strings.Contains(report, "Microphones detected: 2") ||
+		!strings.Contains(report, "Recording content is not included.") {
+		t.Fatalf("unexpected diagnostic report: %s", report)
 	}
 }
 
