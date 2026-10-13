@@ -699,7 +699,11 @@ func (u *UI) layoutWindow(gtx C) D {
 
 	sz := gtx.Constraints.Max
 	u.winWidth = sz.X
-	fillRect(gtx, image.Rectangle{Max: sz}, u.pal.Frame)
+	bg := u.pal.Frame
+	if u.mobile {
+		bg = u.pal.Panel
+	}
+	fillRect(gtx, image.Rectangle{Max: sz}, bg)
 	if !u.mobile {
 		tb := u.layoutTitleBar(gtx)
 		defer op.Offset(image.Pt(0, tb.Size.Y)).Push(gtx.Ops).Pop()

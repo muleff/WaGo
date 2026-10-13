@@ -119,7 +119,7 @@ func (u *UI) starredRows(gtx C) []layout.Widget {
 			txt = "Loading…"
 		}
 		return []layout.Widget{func(gtx C) D {
-			return layout.Inset{Left: infoPadX, Right: 24, Top: 40}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 40}).Layout(gtx, func(gtx C) D {
 				return layout.N.Layout(gtx, u.label(15, txt, p.TextSecondary).Layout)
 			})
 		}}
@@ -168,7 +168,7 @@ func (u *UI) starredRow(gtx C, m *model.Message, all bool) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		bg := mix(p.Panel, p.Hover, u.hover(gtx, c))
 		return background(gtx, bg, 0, func(gtx C) D {
-			return layout.Inset{Left: padX, Right: 24, Top: 12, Bottom: 12}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: padX, Right: 24, Top: 12, Bottom: 12}).Layout(gtx, func(gtx C) D {
 				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 					layout.Rigid(func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
@@ -186,7 +186,7 @@ func (u *UI) starredRow(gtx C, m *model.Message, all bool) D {
 						}
 						gtx.Constraints.Max.X = min(gtx.Constraints.Max.X, bubW)
 						l := record(gtx, func(gtx C) D {
-							return layout.Inset{Left: 9, Right: 9, Top: 6, Bottom: 7}.Layout(gtx, func(gtx C) D {
+							return u.contentInset(layout.Inset{Left: 9, Right: 9, Top: 6, Bottom: 7}).Layout(gtx, func(gtx C) D {
 								return layout.Flex{Alignment: layout.End}.Layout(gtx,
 									layout.Flexed(1, u.label(14.5, txt, p.Text, labelOpts{maxLines: 4}).Layout),
 									layout.Rigid(layout.Spacer{Width: 8}.Layout),
@@ -262,7 +262,9 @@ func (u *UI) permRow(key string, ic *icon.Icon, title, sub string, on bool, run 
 		g := infoGeom
 		g.subHeight = 72
 		return u.layoutListItem(gtx, b, listItem{ic: ic, title: title, sub: sub,
-			trailing: func(gtx C) D { return layout.Inset{Left: 12, Right: 8}.Layout(gtx, iconW(box, 24, col)) }}, g)
+			trailing: func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 12, Right: 8}).Layout(gtx, iconW(box, 24, col))
+			}}, g)
 	}
 }
 
@@ -271,7 +273,7 @@ func (u *UI) changeRows() []layout.Widget {
 	p := u.pal
 	if len(u.info.changes) == 0 {
 		return []layout.Widget{func(gtx C) D {
-			return layout.Inset{Left: infoPadX, Right: 24, Top: 40}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 40}).Layout(gtx, func(gtx C) D {
 				l := u.label(15, u.locale.Text("No member changes yet. Changes show here from when this computer sees them."), p.TextSecondary)
 				l.MaxLines = 0
 				return l.Layout(gtx)
@@ -281,7 +283,7 @@ func (u *UI) changeRows() []layout.Widget {
 	var rows []layout.Widget
 	for _, ch := range u.info.changes {
 		rows = append(rows, func(gtx C) D {
-			return layout.Inset{Left: infoPadX, Right: 24, Top: 10, Bottom: 10}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 10, Bottom: 10}).Layout(gtx, func(gtx C) D {
 				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 					layout.Rigid(u.label(15.5, memberChangeText(ch), p.Text, labelOpts{maxLines: 2}).Layout),
 					layout.Rigid(layout.Spacer{Height: 3}.Layout),

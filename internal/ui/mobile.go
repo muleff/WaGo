@@ -22,7 +22,7 @@ func (u *UI) layoutMobileMain(gtx C) D {
 	inChat := u.selected != nil && u.selPage == u.page && u.page != pageStatus && u.page != pageSettings
 	sendingStatus := u.page == pageStatus && isStatusDestination(u.attach.chatID) && len(u.attach.files) > 0
 	navH := 0
-	if !inChat && !sendingStatus {
+	if !inChat && !sendingStatus && !(u.page == pageSettings && u.settings.detail != 0) && !u.newChat.open() {
 		navH = min(sz.Y, gtx.Dp(72))
 	}
 	content := gtx

@@ -505,6 +505,13 @@ func (u *UI) layoutMessages(gtx C, c *model.Chat) D {
 	width := gtx.Constraints.Max.X
 	margin := max(gtx.Dp(12), min(gtx.Dp(63), width*13/100))
 	maxBubble := min(width*69/100, width-2*margin)
+	if u.mobile {
+		margin = gtx.Dp(8)
+		if c.IsGroup {
+			margin = gtx.Dp(36)
+		}
+		maxBubble = min(width*88/100, width-2*margin)
+	}
 	if isChannelID(c.ID) {
 		maxBubble = min(width*85/100, width-2*margin)
 	}
@@ -579,9 +586,9 @@ func (u *UI) layoutMessages(gtx C, c *model.Chat) D {
 				case r.kind == rowScheduled:
 					return u.layoutScheduled(gtx, r.job, r.first, maxBubble)
 				case r.album:
-					return u.layoutAlbumRow(gtx, c, r, maxBubble, margin)
+					return u.layoutReplySwipe(gtx, c, r.msg, func(gtx C) D { return u.layoutAlbumRow(gtx, c, r, maxBubble, margin) })
 				case r.group != nil:
-					return u.layoutStickerRow(gtx, c, r, maxBubble, margin)
+					return u.layoutReplySwipe(gtx, c, r.msg, func(gtx C) D { return u.layoutStickerRow(gtx, c, r, maxBubble, margin) })
 				default:
 					return u.layoutMessageRow(gtx, c, r, maxBubble, margin)
 				}
@@ -656,6 +663,10 @@ func (u *UI) layoutTyping(gtx C, group bool, margin int, v float32) D {
 // chevron and right-click menu, selection, and the flash after jumping to
 // it from a reply.
 func (u *UI) layoutMessageRow(gtx C, c *model.Chat, r convRow, maxW, margin int) D {
+	return u.layoutReplySwipe(gtx, c, r.msg, func(gtx C) D { return u.layoutMessageRowContent(gtx, c, r, maxW, margin) })
+}
+
+func (u *UI) layoutMessageRowContent(gtx C, c *model.Chat, r convRow, maxW, margin int) D {
 	p := u.pal
 	m := r.msg
 	w := gtx.Constraints.Max.X

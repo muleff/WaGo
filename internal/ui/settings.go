@@ -110,7 +110,7 @@ func (u *UI) layoutSettingsList(gtx C) D {
 			return u.scrollList(gtx, &s.list, len(shown)+2, func(gtx C, i int) D {
 				switch {
 				case i == 0:
-					return layout.Inset{Top: 22, Bottom: 68}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Top: 22, Bottom: 68}).Layout(gtx, func(gtx C) D {
 						gtx.Constraints.Min.X = gtx.Constraints.Max.X - gtx.Dp(8)
 						return layout.N.Layout(gtx, func(gtx C) D {
 							return clickable(gtx, &s.photo, func(gtx C) D {
@@ -119,7 +119,7 @@ func (u *UI) layoutSettingsList(gtx C) D {
 						})
 					})
 				case i == len(shown)+1:
-					return layout.Inset{Left: 29.5, Right: 40, Top: 14, Bottom: 24}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Left: 29.5, Right: 40, Top: 14, Bottom: 24}).Layout(gtx, func(gtx C) D {
 						h := max(1, gtx.Dp(1))
 						fillRect(gtx, image.Rect(0, 0, gtx.Constraints.Max.X, h), p.Divider)
 						return D{Size: image.Pt(gtx.Constraints.Max.X, h)}
@@ -142,11 +142,11 @@ func (u *UI) settingsSearch(gtx C) D {
 	p := u.pal
 	e := &u.settings.search
 	focused := gtx.Focused(e)
-	return layout.Inset{Left: 19, Right: 20, Bottom: 8}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 19, Right: 20, Bottom: 8}).Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		m := record(gtx, func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(46), func(gtx C) D {
-				return layout.Inset{Left: 18, Right: 10}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 18, Right: 10}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(iconW(icSearch, 24, p.TextSecondary)),
 						layout.Rigid(layout.Spacer{Width: 14}.Layout),

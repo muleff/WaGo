@@ -334,7 +334,7 @@ func (u *UI) profileSettings() []settingsSection {
 	a := s.account
 	photo := settingsSection{rows: []settingRow{
 		{key: "bigphoto", kind: setCustom, w: func(gtx C) D {
-			return layout.Inset{Top: 12, Bottom: 16}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Top: 12, Bottom: 16}).Layout(gtx, func(gtx C) D {
 				gtx.Constraints.Min.X = gtx.Constraints.Max.X
 				return layout.N.Layout(gtx, func(gtx C) D {
 					return clickable(gtx, u.btn("settings:bigphoto"), func(gtx C) D {
@@ -396,17 +396,17 @@ func (u *UI) profileSettings() []settingsSection {
 func (u *UI) profileEditor(gtx C) D {
 	p := u.pal
 	s := &u.settings
-	return layout.Inset{Left: 29.5, Right: 22, Top: 4, Bottom: 8}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 29.5, Right: 22, Top: 4, Bottom: 8}).Layout(gtx, func(gtx C) D {
 		d := layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 			layout.Flexed(1, func(gtx C) D {
 				ed := material.Editor(u.th, &s.editor, "")
 				ed.TextSize = 17
 				ed.Color = p.Text
-				return layout.Inset{Top: 8, Bottom: 8}.Layout(gtx, ed.Layout)
+				return u.contentInset(layout.Inset{Top: 8, Bottom: 8}).Layout(gtx, ed.Layout)
 			}),
 			layout.Rigid(func(gtx C) D {
 				left := s.editor.MaxLen - s.editor.Len()
-				return layout.Inset{Left: 8, Right: 4}.Layout(gtx, u.label(14, strconv.Itoa(left), p.TextSecondary).Layout)
+				return u.contentInset(layout.Inset{Left: 8, Right: 4}).Layout(gtx, u.label(14, strconv.Itoa(left), p.TextSecondary).Layout)
 			}),
 			layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &s.save, icTick, 40, 24, p.Icon) }),
 		)
@@ -917,7 +917,7 @@ func (u *UI) layoutSettingsDetail(gtx C) D {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(68), func(gtx C) D {
-				return layout.Inset{Left: 10, Right: 16}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 10, Right: 16}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &s.back, icBack, 40, 24, p.Icon) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
@@ -937,7 +937,7 @@ func (u *UI) layoutSettingsDetail(gtx C) D {
 					}
 					return u.sectionLabel(gtx, r.heading, layout.Inset{Left: 29.5, Right: 29, Top: top, Bottom: 8}, labelOpts{})
 				case r.note != "":
-					return layout.Inset{Left: 29.5, Right: 29, Top: 4, Bottom: 8}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Left: 29.5, Right: 29, Top: 4, Bottom: 8}).Layout(gtx, func(gtx C) D {
 						l := u.label(14, r.note, p.TextSecondary)
 						l.MaxLines = 0
 						return l.Layout(gtx)
@@ -958,7 +958,7 @@ func (u *UI) layoutSettingRow(gtx C, r *settingRow) D {
 	if r.trailing != nil {
 		ic := r.trailing
 		it.trailing = func(gtx C) D {
-			return layout.Inset{Left: 8, Right: 14}.Layout(gtx, iconW(ic, 22, p.TextSecondary))
+			return u.contentInset(layout.Inset{Left: 8, Right: 14}).Layout(gtx, iconW(ic, 22, p.TextSecondary))
 		}
 	}
 	switch r.kind {
@@ -1000,7 +1000,7 @@ var settingsGeomPlain = func() listGeom {
 // layoutShortcut is a row of the Keyboard shortcuts page: what it does,
 // then its keys.
 func (u *UI) layoutShortcut(gtx C, title string, keys []string) D {
-	return layout.Inset{Left: 29.5, Right: 29}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 29.5, Right: 29}).Layout(gtx, func(gtx C) D {
 		return vcenter(gtx, gtx.Dp(48), func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
@@ -1042,7 +1042,7 @@ func (u *UI) keyCaps(gtx C, keys []string) D {
 		}
 		children = append(children, layout.Rigid(func(gtx C) D {
 			m := record(gtx, func(gtx C) D {
-				return layout.Inset{Left: 9, Right: 9, Top: 3, Bottom: 3}.Layout(gtx,
+				return u.contentInset(layout.Inset{Left: 9, Right: 9, Top: 3, Bottom: 3}).Layout(gtx,
 					u.label(13.5, k, p.Text, labelOpts{weight: font.Medium, maxLines: 1}).Layout)
 			})
 			r := image.Rectangle{Max: m.size}
@@ -1051,7 +1051,7 @@ func (u *UI) keyCaps(gtx C, keys []string) D {
 			return D{Size: m.size}
 		}))
 	}
-	return layout.Inset{Left: 12}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 12}).Layout(gtx, func(gtx C) D {
 		return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
 	})
 }

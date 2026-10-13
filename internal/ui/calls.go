@@ -22,7 +22,7 @@ func (u *UI) layoutCallsList(gtx C) D {
 			return u.sectionLabel(gtx, u.locale.Text("Recent"), layout.Inset{Left: 27, Top: 20, Bottom: 22}, labelOpts{maxLines: 1})
 		}),
 		layout.Rigid(func(gtx C) D {
-			return layout.Inset{Left: 27, Right: 27}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 27, Right: 27}).Layout(gtx, func(gtx C) D {
 				l := u.label(15.2, u.locale.Text("wip"),
 					p.TextSecondary, labelOpts{align: text.Start})
 				l.MaxLines = 0

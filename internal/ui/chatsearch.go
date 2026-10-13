@@ -132,7 +132,7 @@ func (u *UI) layoutChatSearch(gtx C) D {
 	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(64), func(gtx C) D {
-				return layout.Inset{Left: 11.5}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 11.5}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &s.closeBtn, icClose, 40, 25, p.IconStrong) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
@@ -142,7 +142,7 @@ func (u *UI) layoutChatSearch(gtx C) D {
 			})
 		}),
 		layout.Rigid(func(gtx C) D {
-			return layout.Inset{Left: 16, Right: 16, Top: 2, Bottom: 10}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 16, Right: 16, Top: 2, Bottom: 10}).Layout(gtx, func(gtx C) D {
 				return u.searchField(gtx, &s.query, "Search")
 			})
 		}),
@@ -161,7 +161,7 @@ func (u *UI) layoutChatSearch(gtx C) D {
 				hint = "No messages found"
 			}
 			if hint != "" {
-				return layout.Inset{Left: 40, Right: 40, Top: 48}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 40, Right: 40, Top: 48}).Layout(gtx, func(gtx C) D {
 					gtx.Constraints.Min.X = gtx.Constraints.Max.X
 					return u.label(15, hint, p.TextSecondary, labelOpts{align: text.Middle}).Layout(gtx)
 				})
@@ -186,12 +186,12 @@ func (u *UI) searchResult(gtx C, c *model.Chat, m *model.Message, q string) D {
 		u.jumpTo(m.ID)
 	}
 	gtx.Constraints.Min.X = gtx.Constraints.Max.X
-	d := layout.Inset{Left: 8, Right: 14}.Layout(gtx, func(gtx C) D {
+	d := u.contentInset(layout.Inset{Left: 8, Right: 14}).Layout(gtx, func(gtx C) D {
 		return clickable(gtx, btn, func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			bg := mix(p.Panel, p.RowHover, u.hover(gtx, btn))
 			return background(gtx, bg, 10, func(gtx C) D {
-				return layout.Inset{Left: 14, Right: 14, Top: 11, Bottom: 12}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 14, Right: 14, Top: 11, Bottom: 12}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 						layout.Rigid(u.label(13.5, u.calendarText(listTime(m.Time, u.now())), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
 						layout.Rigid(layout.Spacer{Height: 4}.Layout),
@@ -215,7 +215,7 @@ func (u *UI) searchResultText(gtx C, c *model.Chat, m *model.Message, q string) 
 	const size = unit.Sp(15.5)
 	var row []layout.FlexChild
 	glyph := func(w layout.Widget) {
-		row = append(row, layout.Rigid(func(gtx C) D { return layout.Inset{Right: 4, Top: 1}.Layout(gtx, w) }))
+		row = append(row, layout.Rigid(func(gtx C) D { return u.contentInset(layout.Inset{Right: 4, Top: 1}).Layout(gtx, w) }))
 	}
 	if m.FromMe {
 		ic, col := receiptIcon(m.Receipt, p, false)

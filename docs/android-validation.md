@@ -65,3 +65,28 @@ run does not validate this APK.
 - https://developer.android.com/training/data-storage/shared/documents-files
 - https://developer.android.com/training/permissions/requesting
 - https://developer.android.com/develop/background-work/services/fgs/service-types
+
+## Mobile layout and swipe follow-up
+
+Removed desktop spacing from secondary mobile pages and reduced direct chat
+margins to 8 dp. Group chats retain room for sender avatars. Settings categories
+and the new chat flow use the full available height. Login no longer wraps its
+form in a second bordered card. New-chat and community actions are translated.
+
+System inset pixels are painted with the panel color and the Android status and
+navigation bar colors follow the theme. Interactive controls remain in the safe
+area; system icons are not hidden by an immersive/fullscreen mode.
+
+Touch swipes to the right move the message, show a reply indicator and quote the
+message on release after 56 dp. The message animates back into position. Short,
+left, vertical and cancelled drags do not reply. A real Gio list regression
+confirms vertical touch scrolling continues to work.
+
+Verified: complete Go tests, vet, build and formatting; rendered 12 mobile views
+at 320/390 dp, landscape, keyboard height and large system text (60 renders).
+The headless inset regression reproduced transparent system-bar backgrounds
+before the fix and verifies panel-colored pixels afterwards. ARM/ARM64 APK
+built locally and its v1/v2/v3 signatures verified. Device-runtime status-bar
+appearance and touch feel still need checking on a physical Android device.
+The previous remote Android job succeeded; desktop jobs failed only on two
+unformatted fields in model.Attachment, now formatted for the next run.

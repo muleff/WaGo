@@ -536,11 +536,11 @@ func (u *UI) newChatCovers() bool {
 func (u *UI) ncHeader(gtx C, title string) D {
 	p := u.pal
 	return vcenter(gtx, gtx.Dp(68), func(gtx C) D {
-		return layout.Inset{Left: 10, Right: 16}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: 10, Right: 16}).Layout(gtx, func(gtx C) D {
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 				layout.Rigid(func(gtx C) D { return u.iconButton(gtx, u.btn("nc:back"), icBack, 40, 24, p.Icon) }),
 				layout.Rigid(layout.Spacer{Width: 10}.Layout),
-				layout.Flexed(1, u.label(19, title, p.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
+				layout.Flexed(1, u.label(19, u.locale.Text(title), p.Text, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
 			)
 		})
 	})
@@ -548,21 +548,21 @@ func (u *UI) ncHeader(gtx C, title string) D {
 
 // ncSearch is the search box under a page's header.
 func (u *UI) ncSearch(gtx C, ed *widget.Editor, hint string) D {
-	return layout.Inset{Left: 23, Right: 23, Bottom: 11}.Layout(gtx, func(gtx C) D {
-		return u.searchField(gtx, ed, hint)
+	return u.contentInset(layout.Inset{Left: 23, Right: 23, Bottom: 11}).Layout(gtx, func(gtx C) D {
+		return u.searchField(gtx, ed, u.locale.Text(hint))
 	})
 }
 
 // ncRow is a row of the panel: a 49dp picture, a title and a subtitle.
 func (u *UI) ncRow(gtx C, c *widget.Clickable, pic layout.Widget, title, sub string) D {
 	p := u.pal
-	return layout.Inset{Left: 13, Right: 18}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 13, Right: 18}).Layout(gtx, func(gtx C) D {
 		return clickable(gtx, c, func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			bg := mix(p.Panel, p.Hover, u.hover(gtx, c))
 			return background(gtx, bg, 10, func(gtx C) D {
 				return vcenter(gtx, gtx.Dp(72), func(gtx C) D {
-					return layout.Inset{Left: 11, Right: 14}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Left: 11, Right: 14}).Layout(gtx, func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(pic),
 							layout.Rigid(layout.Spacer{Width: 15}.Layout),
@@ -599,7 +599,7 @@ func (u *UI) contactPic(c *model.Contact) layout.Widget {
 
 // ncNote is gray text in a list ("No results").
 func (u *UI) ncNote(gtx C, txt string) D {
-	return layout.Inset{Left: 32, Right: 32, Top: 24, Bottom: 24}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 32, Right: 32, Top: 24, Bottom: 24}).Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		l := u.label(15, txt, u.pal.TextSecondary, labelOpts{align: text.Middle})
 		l.MaxLines = 0
@@ -624,8 +624,8 @@ func (u *UI) layoutNewChatPage(gtx C) D {
 	}
 	if q == "" {
 		rows = append(rows, func(gtx C) D {
-			return layout.Inset{Top: 4}.Layout(gtx, func(gtx C) D {
-				return u.ncRow(gtx, u.btn("nc:group"), u.greenCircle(icGroupAdd), "New group", "")
+			return u.contentInset(layout.Inset{Top: 4}).Layout(gtx, func(gtx C) D {
+				return u.ncRow(gtx, u.btn("nc:group"), u.greenCircle(icGroupAdd), u.locale.Text("New group"), "")
 			})
 		})
 		for _, c := range u.chats {
@@ -642,7 +642,7 @@ func (u *UI) layoutNewChatPage(gtx C) D {
 	contacts := u.matchContacts(q, false)
 	if len(contacts) > 0 {
 		rows = append(rows, func(gtx C) D {
-			return u.sectionLabel(gtx, "Contacts on WhatsApp", layout.Inset{Left: 32, Right: 29, Top: 18, Bottom: 12}, labelOpts{})
+			return u.sectionLabel(gtx, u.locale.Text("Contacts on WhatsApp"), layout.Inset{Left: 32, Right: 29, Top: 18, Bottom: 12}, labelOpts{})
 		})
 	}
 	for _, c := range contacts {
@@ -679,7 +679,7 @@ func (u *UI) layoutMembersPage(gtx C) D {
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D { return u.ncHeader(gtx, "Add group members") }),
 		layout.Rigid(func(gtx C) D {
-			return layout.Inset{Left: 29, Right: 29, Bottom: 8}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 29, Right: 29, Bottom: 8}).Layout(gtx, func(gtx C) D {
 				return u.memberChips(gtx)
 			})
 		}),
@@ -736,7 +736,7 @@ func (u *UI) memberChips(gtx C) D {
 	sgtx := gtx
 	sgtx.Constraints = layout.Constraints{Min: image.Pt(w-x, 0), Max: image.Pt(w-x, gtx.Constraints.Max.Y)}
 	ed := record(sgtx, func(gtx C) D {
-		return layout.Inset{Top: 8, Bottom: 8}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Top: 8, Bottom: 8}).Layout(gtx, func(gtx C) D {
 			e := material.Editor(u.th, &nc.members, hint)
 			e.TextSize = 15.5
 			e.Color = p.Text
@@ -823,19 +823,19 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 	}
 	rows := []layout.Widget{
 		func(gtx C) D {
-			return layout.Inset{Top: 28, Bottom: 28}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Top: 28, Bottom: 28}).Layout(gtx, func(gtx C) D {
 				gtx.Constraints.Min.X = gtx.Constraints.Max.X
 				return layout.N.Layout(gtx, u.groupPhotoButton)
 			})
 		},
 		func(gtx C) D {
-			return layout.Inset{Left: 6, Right: 6}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 6, Right: 6}).Layout(gtx, func(gtx C) D {
 				return u.pollField(gtx, &nc.name, "Group name")
 			})
 		},
 		func(gtx C) D {
 			n := len([]rune(nc.name.Text()))
-			return layout.Inset{Left: 30, Right: 30, Top: 6}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 30, Right: 30, Top: 6}).Layout(gtx, func(gtx C) D {
 				gtx.Constraints.Min.X = gtx.Constraints.Max.X
 				return u.label(13, itoa(groupNameMax-n), p.TextSecondary, labelOpts{align: text.End, maxLines: 1}).Layout(gtx)
 			})
@@ -852,7 +852,7 @@ func (u *UI) layoutNewGroupPage(gtx C) D {
 	for _, c := range nc.picked {
 		c := c
 		rows = append(rows, func(gtx C) D {
-			return layout.Inset{Left: 30, Right: 29, Top: 6, Bottom: 6}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 30, Right: 29, Top: 6, Bottom: 6}).Layout(gtx, func(gtx C) D {
 				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 					layout.Rigid(func(gtx C) D { return u.avatar(gtx, c.ID, c.Name, false, 36) }),
 					layout.Rigid(layout.Spacer{Width: 14}.Layout),

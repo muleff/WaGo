@@ -96,7 +96,7 @@ func (u *UI) layoutChannelList(gtx C) D {
 			return u.scrollList(gtx, &u.channel.list, n, func(gtx C, i int) D {
 				if i < len(followed) {
 					if i == 0 {
-						return layout.Inset{Top: 2.5}.Layout(gtx, func(gtx C) D { return u.channelRow(gtx, followed[i]) })
+						return u.contentInset(layout.Inset{Top: 2.5}).Layout(gtx, func(gtx C) D { return u.channelRow(gtx, followed[i]) })
 					}
 					return u.channelRow(gtx, followed[i])
 				}
@@ -108,7 +108,7 @@ func (u *UI) layoutChannelList(gtx C) D {
 				case i <= len(suggested):
 					return u.suggestedRow(gtx, suggested[i-1])
 				}
-				return layout.Inset{Left: 20, Right: 30, Top: 14, Bottom: 20}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 20, Right: 30, Top: 14, Bottom: 20}).Layout(gtx, func(gtx C) D {
 					return u.outlineButton(gtx, &u.channel.discover, "Discover more")
 				})
 			})
@@ -139,7 +139,7 @@ func (u *UI) channelRow(gtx C, ch *model.Channel) D {
 // Follow button.
 func (u *UI) suggestedRow(gtx C, ch *model.Channel) D {
 	p := u.pal
-	return layout.Inset{Left: 22, Right: 33.5}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 22, Right: 33.5}).Layout(gtx, func(gtx C) D {
 		return vcenter(gtx, gtx.Dp(76), func(gtx C) D {
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 				layout.Rigid(func(gtx C) D { return u.avatarOf(gtx, ch.ID, avatarChannel, 51) }),
@@ -186,11 +186,11 @@ func (u *UI) outlineButton(gtx C, c *widget.Clickable, txt string) D {
 // searchBox is the rounded search field under a page header.
 func (u *UI) searchBox(gtx C, e *widget.Editor, hint string) D {
 	p := u.pal
-	return layout.Inset{Left: 23, Right: 23, Bottom: 11}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 23, Right: 23, Bottom: 11}).Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		return background(gtx, p.Search, 22, func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(43), func(gtx C) D {
-				return layout.Inset{Left: 14, Right: 8}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 14, Right: 8}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(iconW(icSearch, 22, p.TextSecondary)),
 						layout.Rigid(layout.Spacer{Width: 12}.Layout),

@@ -407,8 +407,8 @@ type LinkImage struct {
 // Attachment is a file to send.
 type Attachment struct {
 	Path string
- Name string `json:",omitempty"`
- MIME string `json:",omitempty"`
+	Name string `json:",omitempty"`
+	MIME string `json:",omitempty"`
 	// Media is how it is sent: MediaImage, MediaVideo, MediaAudio or
 	// MediaDocument (any file, as is).
 	Media Media

@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"image"
+	"image/color"
 	"image/png"
 	"os"
 	"strings"
@@ -162,14 +163,15 @@ type host struct {
 	reqs     chan request
 
 	// The open window, or nil.
-	win     *app.Window
-	u       *UI
-	events  chan event.Event // the window's events, see openWindow
-	ack     chan struct{}    // an event was handled
-	ops     op.Ops
-	clock   frameClock
-	focused bool
-	hwnd    uintptr // the window's handle on Windows, once known
+	win            *app.Window
+	u              *UI
+	events         chan event.Event // the window's events, see openWindow
+	ack            chan struct{}    // an event was handled
+	ops            op.Ops
+	clock          frameClock
+	focused        bool
+	systemBarColor color.NRGBA
+	hwnd           uintptr // the window's handle on Windows, once known
 	// Files dragged over the window (see desktop.EnableDrop): dragging is
 	// set while a drag with files is over it, and drops gets the paths.
 	dragging atomic.Bool
@@ -427,6 +429,7 @@ func (h *host) newUI() {
 	u := New(hostBackend{Backend: h.b, h: h})
 	u.window, u.host = h.win, h
 	u.mobile = h.o.Mobile
+	h.systemBarColor = color.NRGBA{}
 	u.drafts = h.drafts
 	h.u = u
 	if s := h.linkStash; s != (linkStash{}) {
@@ -497,6 +500,11 @@ func (h *host) windowEvent(e event.Event) (closed bool, err error) {
 	case app.FrameEvent:
 		h.pxPerDp = e.Metric.PxPerDp
 		gtx := app.NewContext(&h.ops, e)
+		u.paintSystemInsets(gtx, e)
+		if h.o.Mobile && h.win != nil && h.systemBarColor != u.pal.Panel {
+			h.win.Option(app.StatusColor(u.pal.Panel), app.NavigationColor(u.pal.Panel))
+			h.systemBarColor = u.pal.Panel
+		}
 		gtx.Now = h.clock.next(gtx.Now)
 		u.Layout(gtx)
 		e.Frame(gtx.Ops)

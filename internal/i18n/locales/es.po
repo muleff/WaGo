@@ -1786,3 +1786,21 @@ msgstr "Solicitar otro código"
 
 msgid "Connecting..."
 msgstr "Conectando..."
+
+msgid "New chat"
+msgstr "Nuevo chat"
+
+msgid "New group"
+msgstr "Nuevo grupo"
+
+msgid "New community"
+msgstr "Nueva comunidad"
+
+msgid "Search name or number"
+msgstr "Buscar nombre o número"
+
+msgid "Contacts on WhatsApp"
+msgstr "Contactos en WhatsApp"
+
+msgid "Add group members"
+msgstr "Añadir miembros al grupo"

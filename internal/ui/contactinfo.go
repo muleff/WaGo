@@ -171,7 +171,7 @@ func (u *UI) infoRule(gtx C) D {
 // businessNotice is the "This is a business account." line.
 func (u *UI) businessNotice(gtx C) D {
 	p := u.pal
-	return layout.Inset{Left: infoTextX, Right: 38, Top: 18, Bottom: 44}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: infoTextX, Right: 38, Top: 18, Bottom: 44}).Layout(gtx, func(gtx C) D {
 		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 			layout.Flexed(1, u.label(15, u.locale.Text("This is a business account."), p.Text, labelOpts{maxLines: 2}).Layout),
 			layout.Rigid(func(gtx C) D { return infoIcon(gtx, p.Green) }),
@@ -186,7 +186,7 @@ func (u *UI) infoText(txt string, col color.NRGBA, size unit.Sp, top, bottom uni
 		x = left[0]
 	}
 	return func(gtx C) D {
-		return layout.Inset{Left: x, Right: 46, Top: top, Bottom: bottom}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: x, Right: 46, Top: top, Bottom: bottom}).Layout(gtx, func(gtx C) D {
 			l := u.label(size, txt, col, labelOpts{})
 			l.MaxLines = 0
 			l.LineHeight, l.LineHeightScale = unit.Sp(float32(size)*1.6), 1
@@ -211,7 +211,7 @@ func (u *UI) infoLink(link string) layout.Widget {
 				u.toast(u.locale.Text("Couldn't open the link."))
 			}
 		}
-		return layout.Inset{Left: infoTextX, Right: 46, Top: 10, Bottom: 16}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: infoTextX, Right: 46, Top: 10, Bottom: 16}).Layout(gtx, func(gtx C) D {
 			return clickable(gtx, c, u.label(16, link, u.pal.Green, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
 		})
 	}
@@ -221,7 +221,7 @@ func (u *UI) infoLink(link string) layout.Widget {
 func (u *UI) infoSection(title string, rule bool) layout.Widget {
 	return func(gtx C) D {
 		p := u.pal
-		return layout.Inset{Left: infoPadX, Right: 30, Top: 14, Bottom: 6}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: infoPadX, Right: 30, Top: 14, Bottom: 6}).Layout(gtx, func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Rigid(u.label(15, u.locale.Text(title), p.TextSecondary, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout),
 				layout.Rigid(func(gtx C) D {
@@ -266,7 +266,7 @@ func (u *UI) businessHours(gtx C, biz *model.Business) D {
 			}),
 		)
 	}
-	return layout.Inset{Left: infoTextX, Right: 38, Top: 12, Bottom: 16}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: infoTextX, Right: 38, Top: 12, Bottom: 16}).Layout(gtx, func(gtx C) D {
 		children := []layout.FlexChild{layout.Rigid(func(gtx C) D { return clickable(gtx, c, line) })}
 		if u.info.allHours {
 			days := biz.Hours
@@ -280,7 +280,7 @@ func (u *UI) businessHours(gtx C, biz *model.Business) D {
 					}
 				}
 				children = append(children, layout.Rigid(func(gtx C) D {
-					return layout.Inset{Top: 8, Right: 38}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Top: 8, Right: 38}).Layout(gtx, func(gtx C) D {
 						return layout.Flex{}.Layout(gtx,
 							layout.Flexed(1, u.label(15.5, u.locale.Text(day.String()), p.TextSecondary, labelOpts{maxLines: 1}).Layout),
 							layout.Rigid(u.label(15.5, u.locale.Text(dayHours(h)), p.TextSecondary, labelOpts{maxLines: 1, align: text.End}).Layout),

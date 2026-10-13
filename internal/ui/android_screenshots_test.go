@@ -30,12 +30,38 @@ func TestAndroidScreenshots(t *testing.T) {
 	}{
 		{"", image.Pt(390, 780), 1}, {"-320", image.Pt(320, 640), 1}, {"-landscape", image.Pt(780, 390), 1}, {"-keyboard", image.Pt(320, 280), 1}, {"-large-text", image.Pt(390, 780), 1.4},
 	} {
-		for _, view := range []string{"chats", "contact", "updates", "login"} {
+		for _, view := range []string{"chats", "conversation", "contact", "updates", "login", "settings", "profile", "general", "privacy", "newchat", "communities", "calls"} {
 			u := New(mock.NewReference())
 			u.mobile = true
 			u.Start(func() {})
 			u.applyEvents()
 			u.SetConn(model.ConnEvent{State: model.StateOnline})
+			if view == "conversation" {
+				u.SelectID("test@g.us")
+			}
+			if view == "settings" {
+				u.setPage(pageSettings)
+			}
+			if view == "profile" || view == "general" || view == "privacy" {
+				u.setPage(pageSettings)
+				k := settingProfile
+				if view == "general" {
+					k = settingGeneral
+				}
+				if view == "privacy" {
+					k = settingPrivacy
+				}
+				u.openSettings(k)
+			}
+			if view == "communities" {
+				u.setPage(pageCommunities)
+			}
+			if view == "calls" {
+				u.setPage(pageCalls)
+			}
+			if view == "newchat" {
+				u.ShowOverlay("newchat", 0, 0)
+			}
 			if view == "contact" {
 				u.SelectID("test@g.us")
 				u.ShowContact("vivy@lid", 0, 0)

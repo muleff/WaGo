@@ -698,7 +698,11 @@ func (u *UI) layoutComposerBox(gtx C) D {
 	}
 	hasText := trimSpace(c.composer.Text()) != "" && !c.editorElsewhere
 	sv := easeOut(c.sendAnim.step(gtx, hasText, durSwitch))
-	return layout.Inset{Left: 12, Right: 12, Top: 6, Bottom: 12}.Layout(gtx, func(gtx C) D {
+	in := layout.Inset{Left: 12, Right: 12, Top: 6, Bottom: 12}
+	if u.mobile {
+		in = layout.Inset{Left: 8, Right: 8, Top: 4, Bottom: 6}
+	}
+	return in.Layout(gtx, func(gtx C) D {
 		gtx.Constraints.Min.X = gtx.Constraints.Max.X
 		var picker, slashPicker part
 		if ghost := c.mentionGhost; ghost != nil {

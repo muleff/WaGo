@@ -95,7 +95,7 @@ func (u *UI) layoutMsgInfo(gtx C) D {
 	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			return vcenter(gtx, gtx.Dp(64), func(gtx C) D {
-				return layout.Inset{Left: 11.5}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 11.5}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &s.closeBtn, icClose, 40, 25, p.IconStrong) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
@@ -201,7 +201,7 @@ func (u *UI) msgInfoPreview(gtx C) D {
 func (u *UI) msgInfoHeading(ic *icon.Icon, blue bool, title string) layout.Widget {
 	return func(gtx C) D {
 		p := u.pal
-		return layout.Inset{Left: infoPadX, Right: 24, Top: 26, Bottom: 14}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 26, Bottom: 14}).Layout(gtx, func(gtx C) D {
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 				layout.Rigid(iconW(ic, 21, msgInfoTickColor(p, blue))),
 				layout.Rigid(layout.Spacer{Width: 14}.Layout),
@@ -239,7 +239,7 @@ func (u *UI) msgInfoPerson(r model.PersonReceipt, at time.Time) layout.Widget {
 // haven't read it) yet.
 func (u *UI) msgInfoRemaining(n int) layout.Widget {
 	return func(gtx C) D {
-		return layout.Inset{Left: infoPadX + 12, Right: 24, Top: 6, Bottom: 8}.Layout(gtx,
+		return u.contentInset(layout.Inset{Left: infoPadX + 12, Right: 24, Top: 6, Bottom: 8}).Layout(gtx,
 			u.label(15.5, fmt.Sprintf("%d remaining", n), u.pal.TextSecondary, labelOpts{maxLines: 1}).Layout)
 	}
 }
@@ -253,7 +253,7 @@ func (u *UI) msgInfoTime(ic *icon.Icon, blue bool, title string, at time.Time) l
 		if !at.IsZero() {
 			when = u.receiptTime(at)
 		}
-		return layout.Inset{Left: infoPadX, Right: 24, Top: 22, Bottom: 6}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 22, Bottom: 6}).Layout(gtx, func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Rigid(func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
@@ -264,7 +264,7 @@ func (u *UI) msgInfoTime(ic *icon.Icon, blue bool, title string, at time.Time) l
 				}),
 				layout.Rigid(layout.Spacer{Height: 6}.Layout),
 				layout.Rigid(func(gtx C) D {
-					return layout.Inset{Left: 35}.Layout(gtx, u.label(14.5, when, p.TextSecondary, labelOpts{maxLines: 1}).Layout)
+					return u.contentInset(layout.Inset{Left: 35}).Layout(gtx, u.label(14.5, when, p.TextSecondary, labelOpts{maxLines: 1}).Layout)
 				}),
 			)
 		})

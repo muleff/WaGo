@@ -49,7 +49,8 @@ type clicks struct {
 
 type clickEntry struct {
 	widget.Clickable
-	seen int64 // frame of last use
+	seen  int64 // frame of last use
+	swipe replySwipe
 }
 
 // clickKeep is how many frames a button stays after it was last used.
@@ -79,7 +80,7 @@ func (u *UI) pageHeader(gtx C, title string, buttons ...layout.FlexChild) D {
 		layout.Flexed(1, u.label(23.5, title, p.Text, labelOpts{weight: font.Medium, maxLines: 1}).Layout),
 	}, buttons...)
 	return vcenter(gtx, gtx.Dp(68), func(gtx C) D {
-		return layout.Inset{Left: 21, Right: 21}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: 21, Right: 21}).Layout(gtx, func(gtx C) D {
 			return layout.Flex{Alignment: layout.Middle}.Layout(gtx, children...)
 		})
 	})
@@ -92,7 +93,7 @@ func (u *UI) headerButton(c *widget.Clickable, ic *icon.Icon, size unit.Dp) layo
 
 // sectionLabel is a small gray heading inside a list ("Recent", "Viewed").
 func (u *UI) sectionLabel(gtx C, txt string, in layout.Inset, o labelOpts) D {
-	return in.Layout(gtx, u.label(15.2, txt, u.pal.TextSecondary, o).Layout)
+	return u.contentInset(in).Layout(gtx, u.label(15.2, txt, u.pal.TextSecondary, o).Layout)
 }
 
 // emptyPane is the right-hand placeholder of the Status, Channels,
@@ -102,7 +103,7 @@ func (u *UI) emptyPane(gtx C, glyph func(gtx C, col color.NRGBA) D, title, sub, 
 	p := u.pal
 	dims := fill(gtx, p.Panel)
 	gtx.Constraints.Min = gtx.Constraints.Max
-	layout.Inset{Bottom: 43}.Layout(gtx, func(gtx C) D {
+	u.contentInset(layout.Inset{Bottom: 43}).Layout(gtx, func(gtx C) D {
 		return layout.Center.Layout(gtx, func(gtx C) D {
 			gtx.Constraints.Max.X = min(gtx.Constraints.Max.X, gtx.Dp(720))
 			return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
@@ -123,7 +124,7 @@ func (u *UI) emptyPane(gtx C, glyph func(gtx C, col color.NRGBA) D, title, sub, 
 	if footer != "" {
 		layout.S.Layout(gtx, func(gtx C) D {
 			gtx.Constraints.Min.X = 0
-			return layout.Inset{Bottom: 45}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Bottom: 45}).Layout(gtx, func(gtx C) D {
 				return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 					layout.Rigid(iconW(icLockOutline, 20, p.TextSecondary)),
 					layout.Rigid(layout.Spacer{Width: 6}.Layout),
@@ -161,6 +162,7 @@ type listItem struct {
 }
 
 func (u *UI) layoutListItem(gtx C, c *widget.Clickable, it listItem, g listGeom) D {
+	g = u.mobileListGeometry(g)
 	p := u.pal
 	fg, sub, icCol := p.Text, p.TextSecondary, p.TextSecondary
 	if it.danger {
@@ -169,7 +171,7 @@ func (u *UI) layoutListItem(gtx C, c *widget.Clickable, it listItem, g listGeom)
 			fg, icCol = p.DangerSoft, p.DangerSoft
 		}
 	}
-	return layout.Inset{Left: g.hoverLeft, Right: g.hoverRight}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: g.hoverLeft, Right: g.hoverRight}).Layout(gtx, func(gtx C) D {
 		return clickable(gtx, c, func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			bg := mix(p.Panel, p.RowHover, u.hover(gtx, c))
@@ -183,7 +185,7 @@ func (u *UI) layoutListItem(gtx C, c *widget.Clickable, it listItem, g listGeom)
 					if pb == 0 {
 						pb = g.padY
 					}
-					return layout.Inset{Top: g.padY, Bottom: pb}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Top: g.padY, Bottom: pb}).Layout(gtx, func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
 								// The icon (or picture) is centered on iconCenter.

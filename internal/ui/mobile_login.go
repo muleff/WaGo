@@ -16,7 +16,7 @@ func (u *UI) layoutMobileLogin(gtx C) D {
 	// Android's keyboard can reduce the usable height below the card's
 	// natural height. A scrollable form keeps Next and the code reachable.
 	return u.mobileLoginList.Layout(gtx, 1, func(gtx C, _ int) D {
-		return layout.Inset{Left: 20, Right: 20, Top: 20, Bottom: 20}.Layout(gtx, func(gtx C) D {
+		return layout.Inset{Left: 12, Right: 12, Top: 16, Bottom: 16}.Layout(gtx, func(gtx C) D {
 			gtx.Constraints.Max.X = min(gtx.Constraints.Max.X, gtx.Dp(480))
 			return layout.Flex{Axis: layout.Vertical, Alignment: layout.Middle}.Layout(gtx,
 				layout.Rigid(u.layoutMobileLoginCard),
@@ -34,13 +34,12 @@ func (u *UI) layoutMobileLogin(gtx C) D {
 }
 
 func (u *UI) layoutMobileLoginCard(gtx C) D {
-	p := u.pal
 	gtx.Constraints.Min.X = gtx.Constraints.Max.X
 
 	m := op.Record(gtx.Ops)
 	dims := layout.Inset{
-		Left: 24, Right: 24,
-		Top: 32, Bottom: 32,
+		Left: 0, Right: 0,
+		Top: 16, Bottom: 16,
 	}.Layout(gtx, func(gtx C) D {
 		if !u.verifyFading {
 			return u.layoutMobileLoginForm(gtx, u.verifyStep)
@@ -63,20 +62,6 @@ func (u *UI) layoutMobileLoginCard(gtx C) D {
 	})
 
 	call := m.Stop()
-	r := gtx.Dp(20)
-
-	fillRRect(
-		gtx,
-		image.Rectangle{Max: dims.Size}.Inset(-1),
-		r+1,
-		p.PanelBorder,
-	)
-	fillRRect(
-		gtx,
-		image.Rectangle{Max: dims.Size},
-		r,
-		p.Panel,
-	)
 
 	call.Add(gtx.Ops)
 	return dims

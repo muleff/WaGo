@@ -185,7 +185,7 @@ func (u *UI) layoutInfo(gtx C) D {
 				title = infoSubTitle(u.info.sub)
 			}
 			return vcenter(gtx, gtx.Dp(64), func(gtx C) D {
-				return layout.Inset{Left: 11.5}.Layout(gtx, func(gtx C) D {
+				return u.contentInset(layout.Inset{Left: 11.5}).Layout(gtx, func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D { return u.iconButton(gtx, &u.info.closeBtn, closeIc, 40, 25, p.IconStrong) }),
 						layout.Rigid(layout.Spacer{Width: 10}.Layout),
@@ -260,7 +260,9 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 			return u.infoCircleRow(gtx, "community", func(gtx C) D {
 				return roundedSquare(gtx, 52, 12, p.Green, icGroupsFill, 32, rgb(0xffffff))
 			}, listItem{title: u.locale.Text("Add group to a community"), sub: u.locale.Text("Bring members together in topic-based groups"),
-				trailing: func(gtx C) D { return layout.Inset{Right: 27}.Layout(gtx, iconW(icChevronRight, 24, p.TextSecondary)) }}, 107)
+				trailing: func(gtx C) D {
+					return u.contentInset(layout.Inset{Right: 27}).Layout(gtx, iconW(icChevronRight, 24, p.TextSecondary))
+				}}, 107)
 		})
 	}
 	rows = append(rows,
@@ -281,7 +283,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 		members = filterMembers(members, u.info.memberQuery.Text())
 		if len(members) == 0 {
 			rows = append(rows, func(gtx C) D {
-				return layout.Inset{Left: infoPadX, Top: 14, Bottom: 14}.Layout(gtx, u.label(15, u.locale.Text("No members found"), p.TextSecondary).Layout)
+				return u.contentInset(layout.Inset{Left: infoPadX, Top: 14, Bottom: 14}).Layout(gtx, u.label(15, u.locale.Text("No members found"), p.TextSecondary).Layout)
 			})
 		}
 	} else if !u.info.allMembers && len(members) > infoMembersShown {
@@ -296,7 +298,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 			if c.Clicked(gtx) {
 				u.info.allMembers = true
 			}
-			return layout.Inset{Left: infoPadX + 66, Top: 10, Bottom: 10}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: infoPadX + 66, Top: 10, Bottom: 10}).Layout(gtx, func(gtx C) D {
 				return clickable(gtx, c, u.label(16.5, fmt.Sprintf("View all (%d more)", more), p.Green).Layout)
 			})
 		})
@@ -327,7 +329,7 @@ func (u *UI) infoRows(gtx C, c *model.Chat, info *model.ChatInfo) []layout.Widge
 		}
 		txt := "Group created" + by + ", on " + info.Created.Format("02/01/2006") + " at " + info.Created.Format("15:04")
 		rows = append(rows, func(gtx C) D {
-			return layout.Inset{Left: infoPadX, Right: 24, Top: 15.5, Bottom: 40}.Layout(gtx,
+			return u.contentInset(layout.Inset{Left: infoPadX, Right: 24, Top: 15.5, Bottom: 40}).Layout(gtx,
 				u.label(15, txt, p.TextSecondary, labelOpts{maxLines: 2}).Layout)
 		})
 	}
@@ -392,7 +394,7 @@ func durationLabel(secs uint32) string {
 
 func (u *UI) infoDivider(top, bottom unit.Dp) layout.Widget {
 	return func(gtx C) D {
-		return layout.Inset{Left: infoPadX, Right: 30, Top: top, Bottom: bottom}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: infoPadX, Right: 30, Top: top, Bottom: bottom}).Layout(gtx, func(gtx C) D {
 			h := max(1, gtx.Dp(1))
 			fillRect(gtx, image.Rect(0, 0, gtx.Constraints.Max.X, h), u.pal.Hover)
 			return D{Size: image.Pt(gtx.Constraints.Max.X, h)}
@@ -567,7 +569,7 @@ func (u *UI) infoAbout(gtx C, info *model.ChatInfo) D {
 	if txt == "" {
 		txt, col = "Add group description", p.Green
 	}
-	return layout.Inset{Left: infoPadX, Right: 30, Top: 6, Bottom: 31}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: infoPadX, Right: 30, Top: 6, Bottom: 31}).Layout(gtx, func(gtx C) D {
 		return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 			layout.Flexed(1, func(gtx C) D {
 				l := u.label(17, txt, col, labelOpts{})
@@ -579,7 +581,7 @@ func (u *UI) infoAbout(gtx C, info *model.ChatInfo) D {
 				if !info.IsGroup {
 					return D{}
 				}
-				return layout.Inset{Left: 16, Right: 1}.Layout(gtx, iconW(icEdit, 26, p.IconStrong))
+				return u.contentInset(layout.Inset{Left: 16, Right: 1}).Layout(gtx, iconW(icEdit, 26, p.IconStrong))
 			}),
 		)
 	})
@@ -599,14 +601,14 @@ func (u *UI) infoMedia(gtx C, info *model.ChatInfo) D {
 					if media.Count == 0 {
 						return D{}
 					}
-					return layout.Inset{Right: 22.5}.Layout(gtx, u.label(16.8, itoa(media.Count), p.TextSecondary).Layout)
+					return u.contentInset(layout.Inset{Right: 22.5}).Layout(gtx, u.label(16.8, itoa(media.Count), p.TextSecondary).Layout)
 				}}, infoGeom)
 		}),
 		layout.Rigid(func(gtx C) D {
 			if len(media.Media) == 0 {
 				return D{}
 			}
-			return layout.Inset{Left: 29.5, Right: 37, Top: 10.5, Bottom: 19.7}.Layout(gtx, func(gtx C) D {
+			return u.contentInset(layout.Inset{Left: 29.5, Right: 37, Top: 10.5, Bottom: 19.7}).Layout(gtx, func(gtx C) D {
 				gap := gtx.Dp(8.3)
 				w := (gtx.Constraints.Max.X - 3*gap) / 4
 				h := gtx.Dp(90.3)
@@ -642,7 +644,7 @@ func (u *UI) greenAction(key string, ic *icon.Icon, title string, isNew bool) la
 		p := u.pal
 		it := listItem{title: title}
 		if isNew {
-			it.trailing = func(gtx C) D { return layout.Inset{Right: 12}.Layout(gtx, u.pill("New", 13.5, true)) }
+			it.trailing = func(gtx C) D { return u.contentInset(layout.Inset{Right: 12}).Layout(gtx, u.pill("New", 13.5, true)) }
 		}
 		return u.infoCircleRow(gtx, key, func(gtx C) D {
 			px := gtx.Dp(52)
@@ -657,7 +659,7 @@ func (u *UI) pill(txt string, size unit.Sp, round bool) layout.Widget {
 	return func(gtx C) D {
 		p := u.pal
 		m := record(gtx, func(gtx C) D {
-			return layout.Inset{Left: 9, Right: 9, Top: 2.5, Bottom: 3}.Layout(gtx,
+			return u.contentInset(layout.Inset{Left: 9, Right: 9, Top: 2.5, Bottom: 3}).Layout(gtx,
 				u.label(size, txt, p.ChipActiveText, labelOpts{weight: font.SemiBold, maxLines: 1}).Layout)
 		})
 		r := gtx.Dp(6)
@@ -677,7 +679,7 @@ func (u *UI) infoMembersHeader(gtx C, info *model.ChatInfo) D {
 		txt = "1 member"
 	}
 	// The search button's 40dp box ends 6dp right of its icon.
-	return layout.Inset{Left: infoPadX, Right: 34, Top: 32.2 - 6, Bottom: 13.7 - 6}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: infoPadX, Right: 34, Top: 32.2 - 6, Bottom: 13.7 - 6}).Layout(gtx, func(gtx C) D {
 		return u.membersHeaderRow(gtx, txt)
 	})
 }
@@ -688,7 +690,9 @@ func (u *UI) infoMember(gtx C, m model.Member) D {
 		it.sub = "Add member tag"
 	}
 	if m.Admin {
-		it.trailing = func(gtx C) D { return layout.Inset{Right: 17}.Layout(gtx, u.pill("Group admin", 12.3, false)) }
+		it.trailing = func(gtx C) D {
+			return u.contentInset(layout.Inset{Right: 17}).Layout(gtx, u.pill("Group admin", 12.3, false))
+		}
 	}
 	g := infoGeom
 	g.iconCenter = infoPadX - g.hoverLeft + 25.5

@@ -42,3 +42,12 @@ func TestEmptyTextDoesNotExposeCatalogHeader(t *testing.T) {
 		t.Fatalf("empty text exposed catalog: %q", got)
 	}
 }
+
+func TestSpanishMobileContactActions(t *testing.T) {
+	l := New("es")
+	for _, key := range []string{"New chat", "New group", "New community", "Search name or number", "Contacts on WhatsApp", "Add group members"} {
+		if got := l.Text(key); got == key {
+			t.Errorf("untranslated mobile action %q", key)
+		}
+	}
+}

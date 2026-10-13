@@ -87,10 +87,10 @@ func (u *UI) layoutCommunityEntry(gtx C, e communityEntry) D {
 	p := u.pal
 	switch e.kind {
 	case entryNew:
-		return layout.Inset{Top: 3.5}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Top: 3.5}).Layout(gtx, func(gtx C) D {
 			return u.simpleRow(gtx, &u.commun.create, func(gtx C) D {
 				return roundedSquare(gtx, 51, 10, p.Green, icGroupsFill, 30, rgb(0xffffff))
-			}, "New community", font.Normal)
+			}, u.locale.Text("New community"), font.Normal)
 		})
 	case entryHeader:
 		click := u.btn("community:" + e.community.ID)
@@ -135,11 +135,11 @@ func (u *UI) layoutCommunityEntry(gtx C, e communityEntry) D {
 		if u.commun.expanded[e.community.ID] {
 			label = u.locale.Text("communities.less")
 		}
-		return layout.Inset{Left: 91.5, Top: 17, Bottom: 29}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: 91.5, Top: 17, Bottom: 29}).Layout(gtx, func(gtx C) D {
 			return clickable(gtx, click, u.label(16.7, label, p.Green).Layout)
 		})
 	case entryDivider:
-		return layout.Inset{Left: 21, Right: 34, Bottom: 7}.Layout(gtx, func(gtx C) D {
+		return u.contentInset(layout.Inset{Left: 21, Right: 34, Bottom: 7}).Layout(gtx, func(gtx C) D {
 			h := max(1, gtx.Dp(1))
 			fillRect(gtx, image.Rect(0, 0, gtx.Constraints.Max.X, h), p.Divider)
 			return D{Size: image.Pt(gtx.Constraints.Max.X, h)}
@@ -151,13 +151,13 @@ func (u *UI) layoutCommunityEntry(gtx C, e communityEntry) D {
 // simpleRow is a hoverable row with a picture and a single line of text.
 func (u *UI) simpleRow(gtx C, c *widget.Clickable, pic layout.Widget, title string, weight font.Weight) D {
 	p := u.pal
-	return layout.Inset{Left: 13, Right: 18, Top: 2, Bottom: 2}.Layout(gtx, func(gtx C) D {
+	return u.contentInset(layout.Inset{Left: 13, Right: 18, Top: 2, Bottom: 2}).Layout(gtx, func(gtx C) D {
 		return clickable(gtx, c, func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			bg := mix(p.Panel, p.Hover, u.hover(gtx, c))
 			return background(gtx, bg, 10, func(gtx C) D {
 				return vcenter(gtx, gtx.Dp(76.3), func(gtx C) D {
-					return layout.Inset{Left: 11, Right: 14}.Layout(gtx, func(gtx C) D {
+					return u.contentInset(layout.Inset{Left: 11, Right: 14}).Layout(gtx, func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(pic),
 							layout.Rigid(layout.Spacer{Width: 15}.Layout),
