@@ -12,7 +12,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
+	"github.com/muleff/WaGo/internal/mock"
 )
 
 // TestClickThroughFade checks that an overlay fading out doesn't swallow

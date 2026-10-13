@@ -12,7 +12,7 @@ import (
 	"github.com/polymorfa/hypermeow/types"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // EditText implements model.Backend. The stored text refers to people as

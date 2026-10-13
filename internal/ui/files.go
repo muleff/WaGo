@@ -18,8 +18,8 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/widget/material"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/video"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/video"
 )
 
 // Documents and audio in bubbles: a document card that opens the file, and

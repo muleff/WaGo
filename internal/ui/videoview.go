@@ -14,8 +14,8 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/widget/material"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/video"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/video"
 )
 
 // controlsLinger is how long the video controls stay after the pointer stops.

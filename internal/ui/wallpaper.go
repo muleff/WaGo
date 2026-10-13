@@ -11,7 +11,7 @@ import (
 	"gioui.org/op/paint"
 	"golang.org/x/image/vector"
 
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // wallpaper is the doodle pattern behind conversations. The tile is

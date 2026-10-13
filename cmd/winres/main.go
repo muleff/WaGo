@@ -17,7 +17,7 @@ import (
 	"github.com/tc-hib/winres"
 	"github.com/tc-hib/winres/version"
 
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 func main() {

@@ -19,7 +19,7 @@ import (
 	"github.com/polymorfa/hypermeow/types/events"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // avatarTTL is how long a cached profile picture is trusted before refetching.

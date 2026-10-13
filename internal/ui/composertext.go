@@ -15,7 +15,7 @@ import (
 	"gioui.org/widget/material"
 	"golang.org/x/image/math/fixed"
 
-	"github.com/skidy89/openWA/internal/command"
+	"github.com/muleff/WaGo/internal/command"
 )
 
 // The composer shows WhatsApp formatting as you type: *bold*, _italic_,

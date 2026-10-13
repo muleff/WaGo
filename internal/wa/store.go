@@ -10,7 +10,7 @@ import (
 
 	"github.com/polymorfa/hypermeow/proto/waE2E"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // hypermeow (like whatsmeow) only stores keys and session state, not

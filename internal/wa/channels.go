@@ -11,7 +11,7 @@ import (
 	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/polymorfa/hypermeow/types"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // channelMeta is a channel's row in wz_channels.

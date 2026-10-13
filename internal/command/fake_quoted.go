@@ -3,7 +3,7 @@ package command
 import (
 	"errors"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 const missingProperties = "Missing required options. You must provide both a sender and text to send a fake message."

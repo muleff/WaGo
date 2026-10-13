@@ -352,11 +352,11 @@ func parseWindowsAudioDevices(output string) []windowsAudioDevice {
 
 func quotedDeviceName(line string) (string, bool) {
 	quotes := []struct{ open, close rune }{
-		{'"\, '"'},
+		{'"', '"'},
 		{'“', '”'},
 		{'”', '”'},
 		{'«', '»'},
-		{'', ''},
+		{'\'', '\''},
 	}
 	for _, q := range quotes {
 		start := strings.IndexRune(line, q.open)

@@ -10,7 +10,7 @@ import (
 
 	"github.com/polymorfa/hypermeow/types"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Info implements model.Backend. Details are cached in wz_meta so the panel

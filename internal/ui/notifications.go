@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skidy89/openWA/internal/desktop"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/notify"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/desktop"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/notify"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // Preferences (Backend.Pref) of Settings > Notifications and General.

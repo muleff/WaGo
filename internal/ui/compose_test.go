@@ -6,7 +6,7 @@ import (
 
 	"gioui.org/io/key"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestOpenFocusesComposer checks that opening a chat puts the caret in its

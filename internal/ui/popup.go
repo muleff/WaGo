@@ -16,8 +16,8 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // trackMouse records where the pointer is, in content coordinates, so

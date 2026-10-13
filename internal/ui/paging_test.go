@@ -14,8 +14,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // longChat serves the demo data with a long history in one chat.

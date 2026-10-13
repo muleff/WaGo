@@ -15,7 +15,7 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // contactRows builds the scrolling content of a person's or business's

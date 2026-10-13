@@ -20,7 +20,7 @@ import (
 	"github.com/polymorfa/hypermeow/util/hkdfutil"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Polls, locations, contact cards and events: what their messages carry

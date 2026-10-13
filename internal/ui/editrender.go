@@ -20,9 +20,9 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/osclip"
-	"github.com/skidy89/openWA/internal/photo"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/osclip"
+	"github.com/muleff/WaGo/internal/photo"
 )
 
 // Edited photos are rendered into new pictures to send, copy or save:

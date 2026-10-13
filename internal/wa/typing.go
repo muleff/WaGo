@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/polymorfa/hypermeow/types"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 const typingIdle = 3 * time.Second

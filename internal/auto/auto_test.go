@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 var base = time.Date(2026, time.October, 2, 15, 0, 0, 0, time.UTC)

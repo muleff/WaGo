@@ -21,7 +21,7 @@ import (
 
 	xdraw "golang.org/x/image/draw"
 
-	"github.com/skidy89/openWA/internal/photo"
+	"github.com/muleff/WaGo/internal/photo"
 )
 
 type stickerMetadata struct {

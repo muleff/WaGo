@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Backend serves demo data. It never touches the network.

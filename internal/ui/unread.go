@@ -7,7 +7,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Opening a chat with unread messages shows "N unread messages" above the

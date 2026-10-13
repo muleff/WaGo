@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/skidy89/openWA/internal/update"
+	"github.com/muleff/WaGo/internal/update"
 )
 
 // updateStep is where an update stands. Nothing happens until the user

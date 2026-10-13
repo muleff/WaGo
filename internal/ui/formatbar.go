@@ -9,7 +9,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // The formatting toolbar floats over text selected in the composer, like

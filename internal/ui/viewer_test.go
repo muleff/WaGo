@@ -13,8 +13,8 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // A tile's origin must be independent of the point clicked and of pointer

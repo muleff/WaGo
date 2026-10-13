@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/skidy89/openWA/internal/auto"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/auto"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Note is a message in the chat that only you see, like Discord's

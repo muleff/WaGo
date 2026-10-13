@@ -14,8 +14,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/voicerec"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/voicerec"
 )
 
 type recordPhase uint8

@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/skidy89/openWA/internal/accounts"
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/accounts"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // newAccountsHost is a host without a window whose accounts are demo

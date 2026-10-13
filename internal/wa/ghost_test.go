@@ -3,7 +3,7 @@ package wa
 import (
 	"testing"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestGhostPref checks that ghost mode follows its pref.

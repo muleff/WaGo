@@ -10,8 +10,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestMarkAllRead marks every demo chat read, and the ⋮ menu's Starred

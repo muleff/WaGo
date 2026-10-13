@@ -8,7 +8,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // An album is photos and videos sent together (model.Message.Album). Its

@@ -8,7 +8,7 @@ import (
 
 	"gioui.org/io/key"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 func waitSnippetUI(t *testing.T, st *slashTest, done func() bool) {

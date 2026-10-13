@@ -18,8 +18,8 @@ import (
 	"github.com/polymorfa/hypermeow/types"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/photo"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/photo"
 )
 
 // fileInfo is what a document or audio message says about its file.

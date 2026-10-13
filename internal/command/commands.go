@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/sticker"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/sticker"
 )
 
 // All lists the commands, in the order the picker shows them.

@@ -5,8 +5,8 @@ import (
 
 	"gioui.org/io/key"
 
-	"github.com/skidy89/openWA/internal/command"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/command"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // lastNote returns the newest note in chat.

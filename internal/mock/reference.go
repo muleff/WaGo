@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // NewReference returns demo data shaped like a real account (groups with

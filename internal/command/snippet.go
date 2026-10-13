@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 func runSnippet(c *Context) error {

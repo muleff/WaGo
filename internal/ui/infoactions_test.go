@@ -11,7 +11,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
+	"github.com/muleff/WaGo/internal/mock"
 )
 
 // TestInfoActions clicks the group info panel's actions and checks that

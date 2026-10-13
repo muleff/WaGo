@@ -23,8 +23,8 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/photo"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/photo"
 )
 
 // The send view's photo editor, like WhatsApp's: crop and rotate, filters,

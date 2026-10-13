@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Finding people as you type, in the @mention picker and the slash

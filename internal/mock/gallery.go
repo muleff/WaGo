@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // galleryHas reports whether m is one of a GalleryKind's messages.

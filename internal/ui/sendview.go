@@ -16,9 +16,9 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/filepick"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/filepick"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // The send view, WhatsApp's media editor: picked, pasted or dropped files

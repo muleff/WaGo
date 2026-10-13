@@ -15,10 +15,10 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 
-	"github.com/skidy89/openWA/internal/filepick"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/photo"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/filepick"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/photo"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // ncStep is a page of the New chat panel. Each page slides in from the

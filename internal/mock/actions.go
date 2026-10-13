@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Message and chat actions. They change the demo data in memory only.

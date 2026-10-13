@@ -9,7 +9,7 @@ import (
 	"gioui.org/op/paint"
 	xdraw "golang.org/x/image/draw"
 
-	"github.com/skidy89/openWA/internal/webpanim"
+	"github.com/muleff/WaGo/internal/webpanim"
 )
 
 // maxPlayers caps how many animated stickers play at once, and

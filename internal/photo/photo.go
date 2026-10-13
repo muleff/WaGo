@@ -11,7 +11,7 @@ import (
 
 	_ "golang.org/x/image/webp"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Prepared is a photo ready to upload.

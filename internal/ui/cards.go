@@ -13,8 +13,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // Polls, locations, shared contacts and events in bubbles. Each is a card

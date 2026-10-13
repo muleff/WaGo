@@ -8,7 +8,7 @@ import (
 	whatsmeow "github.com/polymorfa/hypermeow"
 	"github.com/polymorfa/hypermeow/store"
 	waLog "github.com/polymorfa/hypermeow/util/log"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 func TestSnippetPersistenceAndAccountSeparation(t *testing.T) {

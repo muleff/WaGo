@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestMessageOrder checks that messages arriving in the same second keep

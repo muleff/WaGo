@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/skidy89/openWA/internal/ui/icon"
+import "github.com/muleff/WaGo/internal/ui/icon"
 
 // Material Symbols Rounded standing in for WhatsApp's glyphs. Status and
 // Channels have no close equivalent and are drawn by hand in draw.go.

@@ -1,8 +1,8 @@
 package ui
 
 import (
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // Drafts, like WhatsApp's: what a chat's composer held when another chat

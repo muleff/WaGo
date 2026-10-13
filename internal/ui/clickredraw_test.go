@@ -14,7 +14,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/mock"
+	"github.com/muleff/WaGo/internal/mock"
 )
 
 // opsData is what a frame drew, to compare with another frame.

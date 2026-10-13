@@ -14,8 +14,8 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/linkpreview"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/linkpreview"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // hasLinkCard reports whether a message's bubble shows a link preview.

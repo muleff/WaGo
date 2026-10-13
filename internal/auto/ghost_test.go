@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestGhost checks that ghost mode refuses what you send, with a notice,

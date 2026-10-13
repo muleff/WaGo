@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 var testMembers = []model.Member{

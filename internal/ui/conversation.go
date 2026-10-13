@@ -18,9 +18,9 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/auto"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/styledtext"
+	"github.com/muleff/WaGo/internal/auto"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/styledtext"
 )
 
 type rowKind int

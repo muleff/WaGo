@@ -4,7 +4,7 @@ import (
 	"gioui.org/font"
 	"gioui.org/layout"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // The votes of a poll (WhatsApp's "Poll details") or the answers to an

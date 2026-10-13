@@ -9,10 +9,10 @@ import (
 
 	"gioui.org/app"
 
-	"github.com/skidy89/openWA/internal/accounts"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui"
-	"github.com/skidy89/openWA/internal/wa"
+	"github.com/muleff/WaGo/internal/accounts"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui"
+	"github.com/muleff/WaGo/internal/wa"
 )
 
 func main() {

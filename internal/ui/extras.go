@@ -6,9 +6,9 @@ import (
 	"gioui.org/font"
 	"gioui.org/layout"
 
-	"github.com/skidy89/openWA/internal/command"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/command"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // Extra features are this app's own, which WhatsApp doesn't have. Each is

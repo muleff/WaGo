@@ -13,8 +13,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/linkpreview"
-	"github.com/skidy89/openWA/internal/mock"
+	"github.com/muleff/WaGo/internal/linkpreview"
+	"github.com/muleff/WaGo/internal/mock"
 )
 
 func TestLinkDomain(t *testing.T) {

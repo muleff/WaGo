@@ -5,7 +5,7 @@ import (
 
 	"gioui.org/op"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Chat actions shared by the chat list's menu and the info panels (and any

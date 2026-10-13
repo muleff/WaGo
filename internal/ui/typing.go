@@ -7,7 +7,7 @@ import (
 
 	"gioui.org/op"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Only actual editor changes announce typing. Restoring a draft or opening

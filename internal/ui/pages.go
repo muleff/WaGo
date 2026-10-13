@@ -11,7 +11,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/ui/icon"
+	"github.com/muleff/WaGo/internal/ui/icon"
 )
 
 // page is what the navigation rail has selected.

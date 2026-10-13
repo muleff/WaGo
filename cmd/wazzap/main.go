@@ -17,13 +17,13 @@ import (
 	"gioui.org/app"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/accounts"
-	"github.com/skidy89/openWA/internal/desktop"
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui"
-	"github.com/skidy89/openWA/internal/update"
-	"github.com/skidy89/openWA/internal/wa"
+	"github.com/muleff/WaGo/internal/accounts"
+	"github.com/muleff/WaGo/internal/desktop"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui"
+	"github.com/muleff/WaGo/internal/update"
+	"github.com/muleff/WaGo/internal/wa"
 )
 
 // version is the release this build is, set by the release build

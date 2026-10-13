@@ -7,7 +7,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 type communityState struct {

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // TestConvMenu checks the chat's ⋮ menu offers a group's and a contact's

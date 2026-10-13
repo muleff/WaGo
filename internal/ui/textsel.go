@@ -11,7 +11,7 @@ import (
 	"gioui.org/io/pointer"
 	"gioui.org/op/clip"
 
-	"github.com/skidy89/openWA/internal/ui/styledtext"
+	"github.com/muleff/WaGo/internal/ui/styledtext"
 )
 
 // textSelection is the selected part of one message's text, as in a

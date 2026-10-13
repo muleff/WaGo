@@ -11,7 +11,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/text"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // The open chat's ⋮ menu, and the chat settings it shares with the info

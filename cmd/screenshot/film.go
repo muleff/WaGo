@@ -15,8 +15,8 @@ import (
 	"gioui.org/unit"
 	xdraw "golang.org/x/image/draw"
 
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/ui"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/ui"
 )
 
 // film renders an animation as a grid of frames, step apart: the top row

@@ -30,11 +30,11 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/memtrim"
-	"github.com/skidy89/openWA/internal/mock"
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui"
-	"github.com/skidy89/openWA/internal/wa"
+	"github.com/muleff/WaGo/internal/memtrim"
+	"github.com/muleff/WaGo/internal/mock"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui"
+	"github.com/muleff/WaGo/internal/wa"
 )
 
 // offline shows a stored session without connecting.

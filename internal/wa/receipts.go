@@ -7,7 +7,7 @@ import (
 
 	"github.com/polymorfa/hypermeow/types"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // Message info: when each person one of your messages went to got it,

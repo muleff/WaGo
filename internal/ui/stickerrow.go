@@ -6,7 +6,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op"
 
-	"github.com/skidy89/openWA/internal/model"
+	"github.com/muleff/WaGo/internal/model"
 )
 
 // groupsSticker reports whether m can sit beside the stickers sent just

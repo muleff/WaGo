@@ -17,8 +17,8 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 
-	"github.com/skidy89/openWA/internal/model"
-	"github.com/skidy89/openWA/internal/ui/styledtext"
+	"github.com/muleff/WaGo/internal/model"
+	"github.com/muleff/WaGo/internal/ui/styledtext"
 )
 
 // Mentions arrive from the backend wrapped in Unicode isolate marks

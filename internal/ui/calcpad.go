@@ -13,7 +13,7 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 
-	"github.com/skidy89/openWA/internal/command"
+	"github.com/muleff/WaGo/internal/command"
 )
 
 // The calculator /calc shows in place of the slash picker. Its keys type
