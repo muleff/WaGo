@@ -130,9 +130,6 @@ msgstr "Commands"
 msgid "SlashCommandsRequired"
 msgstr "These also need Slash commands, on the Extra features page."
 
-msgid "FontSizeNote"
-msgstr "Use %s + / - to increase or decrease text size"
-
 msgid "EnableFeature"
 msgstr "Enable feature"
 
@@ -617,6 +614,69 @@ msgstr "Magenta"
 
 msgid "Blush"
 msgstr "Blush"
+
+msgid "Teal"
+msgstr "Teal"
+
+msgid "Turquoise"
+msgstr "Turquoise"
+
+msgid "Seafoam"
+msgstr "Seafoam"
+
+msgid "Lime"
+msgstr "Lime"
+
+msgid "Olive"
+msgstr "Olive"
+
+msgid "Chartreuse"
+msgstr "Chartreuse"
+
+msgid "Yellow"
+msgstr "Yellow"
+
+msgid "Gold"
+msgstr "Gold"
+
+msgid "Lemon"
+msgstr "Lemon"
+
+msgid "Cyan"
+msgstr "Cyan"
+
+msgid "Aqua"
+msgstr "Aqua"
+
+msgid "Cerulean"
+msgstr "Cerulean"
+
+msgid "Indigo"
+msgstr "Indigo"
+
+msgid "Sapphire"
+msgstr "Sapphire"
+
+msgid "Periwinkle"
+msgstr "Periwinkle"
+
+msgid "Brown"
+msgstr "Brown"
+
+msgid "Mocha"
+msgstr "Mocha"
+
+msgid "Copper"
+msgstr "Copper"
+
+msgid "Gray"
+msgstr "Gray"
+
+msgid "Slate"
+msgstr "Slate"
+
+msgid "Silver"
+msgstr "Silver"
 
 msgid "Change profile photo"
 msgstr "Change profile photo"
@@ -1371,7 +1431,7 @@ msgstr "Only you can see this · "
 msgid "ui.ephemeral.note.dissmiss"
 msgstr "Dismiss"
 
-msgid "ui.message.downloadas"
+msgid "ui.message.downloadable"
 msgstr "Download as…"
 
 msgid "ui.message.goToMessage"

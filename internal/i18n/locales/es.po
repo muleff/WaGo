@@ -106,19 +106,19 @@ msgid "Messages"
 msgstr "Mensajes"
 
 msgid "EditHistory"
-msgstr "Edit History"
+msgstr "Historial de ediciones"
 
 msgid "EditHistoryDescription"
 msgstr "Mira qué decía un mensaje editado antes: haz clic derecho sobre él y selecciona Historial de ediciones"
 
 msgid "KeepDeletedMessages"
-msgstr "Keep Deleted Messages"
+msgstr "Conservar mensajes eliminados"
 
 msgid "KeepDeletedMessagesDescription"
 msgstr "Cuando alguien elimina un mensaje para todos o un estado, sigue mostrandolo marcado como Eliminado"
 
 msgid "ReplayViewOnce"
-msgstr "Replay ViewOnce"
+msgstr "Reabrir ver una vez"
 
 msgid "ReplayViewOnceDescription"
 msgstr "Abre fotos, videos y mensajes de voz de una sola vez tantas veces como quieras, tambien te permite tomar capturas de pantalla"
@@ -613,6 +613,69 @@ msgstr "Magenta"
 
 msgid "Blush"
 msgstr "Rosa suave"
+
+msgid "Teal"
+msgstr "Verde azulado"
+
+msgid "Turquoise"
+msgstr "Turquesa"
+
+msgid "Seafoam"
+msgstr "Espuma de mar"
+
+msgid "Lime"
+msgstr "Lima"
+
+msgid "Olive"
+msgstr "Oliva"
+
+msgid "Chartreuse"
+msgstr "Amarillo verdoso"
+
+msgid "Yellow"
+msgstr "Amarillo"
+
+msgid "Gold"
+msgstr "Dorado"
+
+msgid "Lemon"
+msgstr "Limón"
+
+msgid "Cyan"
+msgstr "Cian"
+
+msgid "Aqua"
+msgstr "Azul agua"
+
+msgid "Cerulean"
+msgstr "Cerúleo"
+
+msgid "Indigo"
+msgstr "Índigo"
+
+msgid "Sapphire"
+msgstr "Zafiro"
+
+msgid "Periwinkle"
+msgstr "Pervinca"
+
+msgid "Brown"
+msgstr "Marrón"
+
+msgid "Mocha"
+msgstr "Moca"
+
+msgid "Copper"
+msgstr "Cobre"
+
+msgid "Gray"
+msgstr "Gris"
+
+msgid "Slate"
+msgstr "Pizarra"
+
+msgid "Silver"
+msgstr "Plateado"
 
 msgid "Change profile photo"
 msgstr "Cambiar foto de perfil"

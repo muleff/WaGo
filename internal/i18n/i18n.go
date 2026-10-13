@@ -11,7 +11,7 @@ import (
 //go:embed locales/*.po
 var catalogs embed.FS
 
-const DefaultLanguage = "en"
+const DefaultLanguage = "es"
 
 // Localizer owns the catalogs used by one UI instance.
 type Localizer struct {
@@ -19,7 +19,7 @@ type Localizer struct {
 	catalogs map[string]*gotext.Po
 }
 
-// New loads the embedded catalogs and selects lang, falling back to English.
+// New loads the embedded catalogs and selects lang, falling back to Spanish.
 func New(lang string) *Localizer {
 	l := &Localizer{catalogs: make(map[string]*gotext.Po)}
 	for _, language := range []string{"en", "es"} {

@@ -195,7 +195,11 @@ type host struct {
 	leaveTo string
 	// notice is shown in the next UI (a toast after switching accounts).
 	notice string
-	upd    updater
+	// linkStash keeps the linking form across window recreation. Android
+	// destroys the window in the background, which used to wipe the typed
+	// number, the pairing-code step and in-flight pairing requests.
+	linkStash linkStash
+	upd       updater
 }
 
 type request struct {
@@ -215,6 +219,15 @@ const (
 	reqRedraw                    // an update moved on: show it
 	reqRestart                   // an update is in place: start it and quit
 )
+
+// linkStash is the linking form a window was showing: the typed number,
+// the pairing-code step and an in-flight pairing request. It survives
+// window recreation so going to the background mid-link doesn't lose it.
+type linkStash struct {
+	country, number, code    string
+	verifyStep, phonePairing bool
+	pairing                  chan phonePairResult
+}
 
 // request queues r for the UI goroutine. It's called from other
 // goroutines and never blocks: a flood of clicks drops the extra ones.
@@ -409,6 +422,17 @@ func (h *host) newUI() {
 	u.mobile = h.o.Mobile
 	u.drafts = h.drafts
 	h.u = u
+	if s := h.linkStash; s != (linkStash{}) {
+		h.linkStash = linkStash{}
+		u.countryCode.SetText(s.country)
+		u.phoneNumber.SetText(s.number)
+		u.phonePairing = s.phonePairing
+		if s.verifyStep {
+			u.verifyCode.SetText(s.code)
+			u.beginMobileLoginTransition(true)
+		}
+		u.login.pairing = s.pairing
+	}
 	u.accounts = h.accountRows()
 	// The window may be there already (another account opened in it).
 	u.deco.Maximized = h.maximized
@@ -502,6 +526,17 @@ func (h *host) enableDrop(hwnd uintptr) {
 
 // closeWindow lets go of a destroyed window and what only it used.
 func (h *host) closeWindow() {
+	if h.u != nil && !h.conn.State.LoggedIn() {
+		u := h.u
+		h.linkStash = linkStash{
+			country:      u.countryCode.Text(),
+			number:       u.phoneNumber.Text(),
+			code:         u.verifyCode.Text(),
+			verifyStep:   u.verifyStep,
+			phonePairing: u.phonePairing,
+			pairing:      u.login.pairing,
+		}
+	}
 	h.idle.Stop()
 	h.away.Stop()
 	h.u.discardVoiceRecord()

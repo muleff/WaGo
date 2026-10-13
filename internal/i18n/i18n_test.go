@@ -14,7 +14,7 @@ func TestLocalizerLanguagesAndFallback(t *testing.T) {
 	if got := l.SetLanguage("unknown"); got != DefaultLanguage {
 		t.Fatalf("unsupported language = %q, want %q", got, DefaultLanguage)
 	}
-	if got := l.Text("Language"); got != "Language" {
-		t.Fatalf("English translation = %q, want %q", got, "Language")
+	if got := l.Text("Language"); got != "Idioma" {
+		t.Fatalf("Spanish fallback translation = %q, want %q", got, "Idioma")
 	}
 }

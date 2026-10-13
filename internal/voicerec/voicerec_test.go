@@ -1,10 +1,14 @@
 package voicerec
 
 import (
+	"math"
+	"os"
 	"reflect"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/tphakala/go-opus/oggopus"
 )
 
 func TestHighQualityVoiceEncoding(t *testing.T) {
@@ -139,5 +143,67 @@ func TestDirectShowSupportAndPermissionClassification(t *testing.T) {
 	if !microphoneAccessDenied("I/O error: Access is denied (0x80070005)") ||
 		microphoneAccessDenied("Error opening input file dummy") {
 		t.Fatal("incorrect microphone permission classification")
+	}
+}
+
+// TestNativeVoiceFile encodes synthetic PCM through the in-process Ogg/Opus
+// settings Android records with, then runs the same validation Finish
+// applies before sending.
+func TestNativeVoiceFile(t *testing.T) {
+	f, err := os.CreateTemp("", "wago-voice-test-*.ogg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := f.Name()
+	defer os.Remove(path)
+	enc, err := oggopus.NewEncoder(f, nativeVoiceConfig())
+	if err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	const samples = 48000 // one second of 48 kHz mono
+	pcm := make([]byte, 2*samples)
+	for i := range samples {
+		v := int16(16000 * math.Sin(2*math.Pi*440*float64(i)/48000))
+		pcm[2*i] = byte(v)
+		pcm[2*i+1] = byte(v >> 8)
+	}
+	if _, err := enc.Write(pcm); err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	if err := enc.Close(); err != nil {
+		f.Close()
+		t.Fatal(err)
+	}
+	f.Close()
+	f, err = os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := validateVoiceFile(f); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNativeVoiceFileRejectsGarbage(t *testing.T) {
+	f, err := os.CreateTemp("", "wago-voice-test-*.ogg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := f.Name()
+	defer os.Remove(path)
+	if _, err := f.WriteString("not an ogg opus recording"); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	f, err = os.Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if err := validateVoiceFile(f); err == nil {
+		t.Fatal("garbage passed voice validation")
 	}
 }

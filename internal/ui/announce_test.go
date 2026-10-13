@@ -11,6 +11,7 @@ import (
 func TestAnnouncementsSendBlocked(t *testing.T) {
 	u := New(mock.NewReference())
 	u.Start(func() {})
+	u.setLanguage("en") // expectations below pin the English strings
 	for _, tc := range []struct {
 		chat, want string
 		ann        bool

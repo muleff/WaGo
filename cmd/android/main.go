@@ -9,6 +9,14 @@ import (
 
 	"gioui.org/app"
 
+	// Permission packages add their AndroidManifest entries at packaging
+	// time (voice notes need RECORD_AUDIO, attachments need storage,
+	// profile photos need the camera). Dangerous permissions are still
+	// granted by the user in system settings on first use.
+	_ "gioui.org/app/permission/camera"
+	_ "gioui.org/app/permission/microphone"
+	_ "gioui.org/app/permission/storage"
+
 	"github.com/muleff/WaGo/internal/accounts"
 	"github.com/muleff/WaGo/internal/model"
 	"github.com/muleff/WaGo/internal/ui"

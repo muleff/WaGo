@@ -322,6 +322,12 @@ jobs:
             grep "package: name='com.muleff.wago'"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
             grep -q 'android.permission.INTERNET'
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
+            grep -q 'android.permission.RECORD_AUDIO'
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
+            grep -q 'android.permission.READ_EXTERNAL_STORAGE'
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump permissions bin/dist/OpenWA-android.apk |
+            grep -q 'android.permission.CAMERA'
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v7

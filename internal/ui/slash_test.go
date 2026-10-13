@@ -31,6 +31,7 @@ func newSlashTest(t *testing.T, chat string) *slashTest {
 	st := &slashTest{t: t, b: mock.New(), now: testNow()}
 	st.b.SetPref(prefSlash, "on") // an extra feature, off by default
 	st.u = New(st.b)
+	st.u.setLanguage("en") // expectations below pin the English strings
 	st.u.Start(func() {})
 	st.u.applyEvents()
 	st.u.SelectID(chat)

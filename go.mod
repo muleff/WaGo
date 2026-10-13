@@ -4,10 +4,12 @@ go 1.27.0
 
 require (
 	gioui.org v0.10.3
+	github.com/gen2brain/malgo v0.11.26
 	github.com/go-text/typesetting v0.3.5
 	github.com/leonelquinteros/gotext v1.7.2
 	github.com/polymorfa/hypermeow v0.0.0-20260819021508-07d103b3683c
 	github.com/tc-hib/winres v0.3.1
+	github.com/tphakala/go-opus v1.1.0
 	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba
 	golang.org/x/image v0.46.0
 	golang.org/x/net v0.59.0
@@ -32,6 +34,7 @@ require (
 	github.com/polymorfa/libsignal-protocol-go v0.2.3-0.20260806162910-a2adef2e8a11 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
+	github.com/tphakala/simd v1.8.0 // indirect
 	go.mau.fi/util v0.10.1 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/exp/shiny v0.0.0-20260908205506-85c1c2202aba // indirect

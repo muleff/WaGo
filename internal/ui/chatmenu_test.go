@@ -14,6 +14,7 @@ import (
 func TestConvMenu(t *testing.T) {
 	u := New(mock.New())
 	u.Start(func() {})
+	u.setLanguage("en") // expectations below pin the English strings
 	labels := func(id string) []string {
 		u.SelectID(id)
 		var out []string
@@ -45,6 +46,7 @@ func TestConvMenu(t *testing.T) {
 func TestExitedGroupCanBeDeleted(t *testing.T) {
 	u := New(mock.New())
 	u.Start(func() {})
+	u.setLanguage("en") // expectations below pin the English strings
 	c := &model.Chat{ID: "exited@g.us", Name: "Former group", IsGroup: true, Exited: true}
 	check := func(name string, items []menuItem) {
 		t.Helper()

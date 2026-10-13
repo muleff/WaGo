@@ -27,7 +27,7 @@ const (
 	prefDoodles     = "doodles"    // wallpaper doodles; on unless "off"
 	prefEnterSend   = "enter_send" // Enter sends; on unless "off"
 	prefSecurityMsg = "security_notifications"
-	prefLanguage    = "language" // the app's UI language; empty is english
+	prefLanguage    = "language" // the app's UI language; empty is Spanish
 	// Previews of the links you send, which ask the linked site for its
 	// title and picture; on unless "off".
 	prefLinkPreviews = "link_previews"

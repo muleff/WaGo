@@ -42,6 +42,9 @@ func Start(ctx context.Context) (*Recorder, error) {
 		captureDebug("Windows microphone privacy check: %v", err)
 		return nil, err
 	}
+	if runtime.GOOS == "android" {
+		return startNative(ctx)
+	}
 	bin, err := findFFmpeg(ctx)
 	if err != nil {
 		captureDebug("FFmpeg selection failed: %v", err)
@@ -192,12 +195,18 @@ func (r *Recorder) Error() error {
 
 // Finish finalizes the Ogg stream. A truncated capture is never sent.
 func (r *Recorder) Finish() (string, error) {
-	select {
-	case <-r.done:
-	default:
-		_, _ = io.WriteString(r.stdin, "q\n")
+	if r.stdin != nil {
+		select {
+		case <-r.done:
+		default:
+			_, _ = io.WriteString(r.stdin, "q\n")
+		}
+		_ = r.stdin.Close()
+	} else {
+		// In-process recorders (see startNative) stop through the
+		// context; the encoder finalizes the stream on teardown.
+		r.cancel()
 	}
-	_ = r.stdin.Close()
 	select {
 	case <-r.done:
 	case <-time.After(7 * time.Second):
@@ -214,24 +223,34 @@ func (r *Recorder) Finish() (string, error) {
 		return "", err
 	}
 	defer f.Close()
+	if err := validateVoiceFile(f); err != nil {
+		_ = os.Remove(r.path)
+		return "", err
+	}
+	return r.path, nil
+}
+
+// validateVoiceFile rejects anything that is not a complete Ogg/Opus
+// recording, so truncated captures are never sent.
+func validateVoiceFile(f *os.File) error {
 	var header [36]byte
 	n, err := io.ReadFull(f, header[:])
 	if err != nil || n < len(header) || string(header[:4]) != "OggS" ||
 		!bytes.Contains(header[:], []byte("OpusHead")) {
-		_ = os.Remove(r.path)
-		return "", errors.New("the microphone did not produce a valid Ogg/Opus recording")
+		return errors.New("the microphone did not produce a valid Ogg/Opus recording")
 	}
 	if st, err := f.Stat(); err != nil || st.Size() < 128 {
-		_ = os.Remove(r.path)
-		return "", errors.New("the recording is empty")
+		return errors.New("the recording is empty")
 	}
-	return r.path, nil
+	return nil
 }
 
 // Abort discards the recording. It can be called while FFmpeg is running.
 func (r *Recorder) Abort() {
 	r.cancel()
-	_ = r.stdin.Close()
+	if r.stdin != nil {
+		_ = r.stdin.Close()
+	}
 	<-r.done
 	_ = os.Remove(r.path)
 }
