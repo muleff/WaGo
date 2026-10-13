@@ -274,18 +274,27 @@ func parseWindowsAudioDevices(output string) []windowsAudioDevice {
 	legacyAudio := false
 	lastAudio := -1
 	for _, line := range strings.Split(output, "\n") {
-		if end := strings.IndexByte(line, ']'); end >= 0 {
-			line = line[end+1:]
+		for {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "[") {
+				if end := strings.IndexByte(trimmed, ']'); end >= 0 {
+					line = trimmed[end+1:]
+					continue
+				}
+			}
+			break
 		}
 		line = strings.TrimSpace(line)
+		lower := strings.ToLower(line)
 		switch {
-		case strings.HasPrefix(line, "DirectShow audio devices"):
+		case strings.Contains(lower, "directshow audio devices") ||
+			(strings.Contains(lower, "audio devices") && !strings.Contains(lower, "video devices")):
 			legacyAudio, lastAudio = true, -1
 			continue
-		case strings.HasPrefix(line, "DirectShow video devices"):
+		case strings.Contains(lower, "directshow video devices") || strings.Contains(lower, "video devices"):
 			legacyAudio, lastAudio = false, -1
 			continue
-		case strings.HasPrefix(line, "Alternative name"):
+		case strings.HasPrefix(lower, "alternative name"):
 			if lastAudio >= 0 {
 				if name, ok := quotedDeviceName(line); ok {
 					devices[lastAudio].alternative = name
@@ -298,36 +307,73 @@ func parseWindowsAudioDevices(output string) []windowsAudioDevice {
 			lastAudio = -1
 			continue
 		}
-		// FFmpeg 9+ prints '"Microphone" (audio)', without headings.
-		// An explicit type wins over a previously seen legacy section.
-		end := strings.LastIndexByte(line, '"')
-		suffix := strings.TrimSpace(line[end+1:])
-		if suffix != "" {
-			lastAudio = -1
-			if suffix != "(audio)" {
-				continue
-			}
-		} else if !legacyAudio {
+
+		end := strings.LastIndexAny(line, "\"'”»")
+		suffix := ""
+		if end >= 0 && end+1 < len(line) {
+			suffix = strings.TrimSpace(line[end+1:])
+		}
+		suffixLower := strings.ToLower(suffix)
+		isExplicitAudio := strings.Contains(suffixLower, "(audio)") || suffixLower == "audio"
+		isExplicitVideo := strings.Contains(suffixLower, "(video)") || suffixLower == "video"
+		isExplicitNone := strings.Contains(suffixLower, "(none)")
+
+		if isExplicitAudio {
+			devices = append(devices, windowsAudioDevice{name: name})
+			lastAudio = len(devices) - 1
+			continue
+		} else if isExplicitVideo || isExplicitNone {
 			lastAudio = -1
 			continue
 		}
-		devices = append(devices, windowsAudioDevice{name: name})
-		lastAudio = len(devices) - 1
+
+		if legacyAudio {
+			devices = append(devices, windowsAudioDevice{name: name})
+			lastAudio = len(devices) - 1
+			continue
+		}
+
+		nameLower := strings.ToLower(name)
+		if strings.Contains(nameLower, "mic") ||
+			strings.Contains(nameLower, "audio") ||
+			strings.Contains(nameLower, "headset") ||
+			strings.Contains(nameLower, "auricular") ||
+			strings.Contains(nameLower, "altavoz") ||
+			strings.Contains(nameLower, "mezcla") ||
+			strings.Contains(nameLower, "stereo mix") {
+			devices = append(devices, windowsAudioDevice{name: name})
+			lastAudio = len(devices) - 1
+			continue
+		}
+		lastAudio = -1
 	}
 	return devices
 }
 
 func quotedDeviceName(line string) (string, bool) {
-	start := strings.IndexByte(line, '"')
-	end := strings.LastIndexByte(line, '"')
-	if start < 0 || end <= start {
-		return "", false
+	quotes := []struct{ open, close rune }{
+		{'"\, '"'},
+		{'“', '”'},
+		{'”', '”'},
+		{'«', '»'},
+		{'', ''},
 	}
-	return line[start+1 : end], true
+	for _, q := range quotes {
+		start := strings.IndexRune(line, q.open)
+		if start >= 0 {
+			rest := line[start+len(string(q.open)):]
+			end := strings.LastIndexRune(rest, q.close)
+			if end >= 0 {
+				res := strings.TrimSpace(rest[:end])
+				if res != "" {
+					return res, true
+				}
+			}
+		}
+	}
+	return "", false
 }
 
-// windowsAudioDevices retains the friendly names for status/tests. Capture
-// uses the alternative ID when present, so duplicate or localized names work.
 func windowsAudioDevices(output string) []string {
 	devices := parseWindowsAudioDevices(output)
 	names := make([]string, 0, len(devices))
@@ -348,13 +394,16 @@ func supportsDirectShow(output []byte) bool {
 }
 
 func isDeviceEnumerationOutput(output string) bool {
-	return strings.Contains(output, "DirectShow audio devices") ||
-		strings.Contains(output, "DirectShow video devices") ||
-		strings.Contains(output, " (audio)") ||
-		strings.Contains(output, " (video)") ||
-		strings.Contains(output, " (none)") ||
-		strings.Contains(output, "Error opening input file dummy.") ||
-		strings.Contains(strings.ToLower(output), "no devices found")
+	lower := strings.ToLower(output)
+	return strings.Contains(lower, "directshow audio devices") ||
+		strings.Contains(lower, "directshow video devices") ||
+		strings.Contains(lower, "audio devices") ||
+		strings.Contains(lower, "video devices") ||
+		strings.Contains(lower, "(audio)") ||
+		strings.Contains(lower, "(video)") ||
+		strings.Contains(lower, "(none)") ||
+		strings.Contains(lower, "error opening input file dummy") ||
+		strings.Contains(lower, "no devices found")
 }
 
 func microphoneAccessDenied(output string) bool {
@@ -362,6 +411,9 @@ func microphoneAccessDenied(output string) bool {
 	return strings.Contains(output, "permission denied") ||
 		strings.Contains(output, "access is denied") ||
 		strings.Contains(output, "access denied") ||
+		strings.Contains(output, "acceso denegado") ||
+		strings.Contains(output, "permiso denegado") ||
+		strings.Contains(output, "privacidad") ||
 		strings.Contains(output, "0x80070005")
 }
 
