@@ -1,4 +1,4 @@
-module github.com/skidy89/openWA
+module github.com/muleff/WaGo
 
 go 1.27.0
 
