@@ -10,6 +10,8 @@ import (
 func TestTemporaryFilesUseAppPrivateDirectory(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("TMPDIR", "/data/local/tmp")
+	t.Setenv("TEMP", os.Getenv("TEMP"))
+	t.Setenv("TMP", os.Getenv("TMP"))
 	if err := ConfigureTemp(root); err != nil {
 		t.Fatal(err)
 	}
