@@ -9,12 +9,13 @@ import (
 	"time"
 
 	waBinary "github.com/polymorfa/hypermeow/binary"
+	"github.com/polymorfa/hypermeow/types"
 )
 
 const (
-	catchNodeMaxPending = 64
-	catchNodeMaxBytes   = 128 << 10
-	catchNodeTTL        = 2 * time.Minute
+	catchNodeMaxPending = 1024
+	catchNodeMaxBytes   = 512 << 10
+	catchNodeTTL        = 15 * time.Minute
 )
 
 type catchNodeKey struct{ chat, id string }
@@ -39,8 +40,8 @@ func catchSafeNode(node waBinary.Node, depth int) (waBinary.Node, bool) {
 		return waBinary.Node{}, false
 	}
 	switch strings.ToLower(node.Tag) {
-	case "enc", "plaintext", "participants", "device-identity", "unavailable", "to", "payload",
-		"key", "secret", "credentials", "credential", "token", "identity", "franking", "verified_name":
+	case "enc", "plaintext", "device-identity", "cipher", "identity",
+		"key", "secret", "credentials", "credential", "franking":
 		return waBinary.Node{}, false
 	}
 	clean := waBinary.Node{Tag: node.Tag}
@@ -53,7 +54,7 @@ func catchSafeNode(node waBinary.Node, depth int) (waBinary.Node, bool) {
 				strings.Contains(lower, "password") || strings.Contains(lower, "cipher") ||
 				strings.Contains(lower, "credential") || strings.Contains(lower, "identity") ||
 				strings.Contains(lower, "private") || strings.Contains(lower, "signature") ||
-				strings.Contains(lower, "session_key") || strings.Contains(lower, "auth") {
+				strings.Contains(lower, "session_key") {
 				continue
 			}
 			clean.Attrs[key] = value
@@ -67,6 +68,10 @@ func catchSafeNode(node waBinary.Node, depth int) (waBinary.Node, bool) {
 			}
 		}
 		clean.Content = filtered
+	} else if child, ok := node.Content.(waBinary.Node); ok {
+		if safe, ok := catchSafeNode(child, depth+1); ok {
+			clean.Content = []waBinary.Node{safe}
+		}
 	} else {
 		clean.Content = node.Content
 	}
@@ -82,6 +87,9 @@ func marshalCatchNodes(nodes []waBinary.Node) ([]byte, error) {
 		if safe, ok := catchSafeNode(child, 0); ok {
 			additional = append(additional, safe)
 		}
+	}
+	if len(additional) == 0 {
+		return nil, nil
 	}
 	data, err := json.Marshal(additional)
 	if err != nil {
@@ -108,25 +116,16 @@ func (b *Backend) onRawCatchNode(_ context.Context, node *waBinary.Node) {
 		return
 	}
 	data, err := marshalCatchNodes(children)
-	if err != nil {
+	if err != nil || len(data) == 0 {
 		return
 	}
 	from := node.AttrGetter().OptionalJIDOrEmpty("from")
-	// WhatsApp sends our other device's one-to-one messages from our own
-	// account, with the actual chat in recipient. This is the same address
-	// resolution used by hypermeow's parseMessageSource.
-	if cli := b.client(); cli != nil && cli.Store != nil && !from.IsEmpty() {
-		device := cli.Store
-		if (device.ID != nil && from.User == device.ID.User) ||
-			(!device.LID.IsEmpty() && from.User == device.LID.User) {
-			if recipient := node.AttrGetter().OptionalJIDOrEmpty("recipient"); !recipient.IsEmpty() {
-				from = recipient
-			}
-		}
+	if recipient := node.AttrGetter().OptionalJIDOrEmpty("recipient"); !recipient.IsEmpty() {
+		from = recipient
 	}
 	chat := ""
 	if !from.IsEmpty() {
-		chat = from.ToNonAD().String()
+		chat = b.canonical(b.ctx, from).String()
 	}
 	key := catchNodeKey{chat: chat, id: id}
 	now := b.now()
@@ -151,6 +150,9 @@ func (b *Backend) onRawCatchNode(_ context.Context, node *waBinary.Node) {
 		delete(b.catchNodes.pending, oldest)
 	}
 	b.catchNodes.pending[key] = pendingCatchNode{at: now, data: data}
+	if rawChat := from.ToNonAD().String(); rawChat != "" && rawChat != chat {
+		b.catchNodes.pending[catchNodeKey{chat: rawChat, id: id}] = pendingCatchNode{at: now, data: data}
+	}
 }
 
 // popCatchNodes only consumes stanza metadata after a message has been stored.
@@ -164,15 +166,21 @@ func (b *Backend) popCatchNodes(chat, id string) []byte {
 	}
 	key := catchNodeKey{chat: chat, id: id}
 	entry, exists := b.catchNodes.pending[key]
+	if !exists && chat != "" {
+		if j, err := types.ParseJID(chat); err == nil && !j.IsEmpty() {
+			canonKey := catchNodeKey{chat: b.canonical(b.ctx, j).String(), id: id}
+			entry, exists = b.catchNodes.pending[canonKey]
+			if exists {
+				key = canonKey
+			}
+		}
+	}
 	if !exists {
 		for candidate, possible := range b.catchNodes.pending {
-			if candidate.id != id {
-				continue
+			if candidate.id == id {
+				key, entry, exists = candidate, possible, true
+				break
 			}
-			if exists {
-				return nil // two chats used the same ID: don't guess
-			}
-			key, entry, exists = candidate, possible, true
 		}
 	}
 	if !exists {
